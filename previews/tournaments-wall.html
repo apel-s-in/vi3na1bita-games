@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#060b14">
+  <title>Preview · Секция Турниры</title>
+  <style>
+    :root{
+      --lab-bg:#050910;
+      --lab-panel:#0b1422;
+      --tw-ink:#eaf5ff;
+      --tw-muted:#88a9cc;
+      --tw-blue:#4daaff;
+      --tw-cyan:#78e9ff;
+      --tw-glass:#17324d;
+      --tw-deep:#07101c;
+      --tw-shadow:#02050a;
+      --tw-red:#ff2d55;
+      --tw-gold:#ffd66b;
+      --tw-violet:#9a6bff;
+      --tw-green:#61ffbd;
+    }
+
+    *{box-sizing:border-box}
+
+    html,
+    body{
+      min-height:100%;
+      margin:0;
+      background:
+        radial-gradient(circle at 50% 0%,rgba(77,170,255,.14),transparent 34%),
+        linear-gradient(180deg,#07101c 0%,#03060b 100%);
+      color:var(--tw-ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      overflow-x:hidden;
+    }
+
+    body{
+      padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+    }
+
+    .lab-page{
+      width:100%;
+      max-width:980px;
+      margin:0 auto;
+      padding:18px 0 28px;
+    }
+
+    .lab-header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:16px;
+    }
+
+    .lab-kicker{
+      font-size:11px;
+      font-weight:950;
+      letter-spacing:1.2px;
+      text-transform:uppercase;
+      color:var(--tw-cyan);
+      text-shadow:0 0 14px rgba(120,233,255,.28);
+    }
+
+    .lab-title{
+      margin:4px 0 0;
+      font-size:28px;
+      line-height:1;
+      text-shadow:0 2px 0 #000,0 0 20px rgba(77,170,255,.25);
+    }
+
+    .lab-note{
+      max-width:420px;
+      padding:10px 12px;
+      border:1px solid rgba(120,233,255,.16);
+      border-radius:14px;
+      background:rgba(6,12,22,.72);
+      color:#9bb8d8;
+      font-size:12px;
+      line-height:1.45;
+      box-shadow:inset 0 0 18px rgba(77,170,255,.05);
+    }
+
+    .lab-stage{
+      position:relative;
+      width:100%;
+      min-height:640px;
+      display:grid;
+      place-items:center;
+      padding:22px;
+      border:1px solid rgba(120,233,255,.12);
+      border-radius:28px;
+      background:
+        linear-gradient(90deg,rgba(255,45,85,.05),transparent 24%,rgba(77,170,255,.07) 50%,transparent 76%,rgba(255,45,85,.05)),
+        radial-gradient(circle at 50% 50%,rgba(120,233,255,.09),transparent 38%),
+        rgba(2,5,10,.64);
+      box-shadow:0 22px 60px rgba(0,0,0,.44),inset 0 0 80px rgba(77,170,255,.04);
+      overflow:hidden;
+    }
+
+    .lab-stage::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+      background-size:40px 40px;
+      opacity:.16;
+      pointer-events:none;
+    }
+
+    .lab-stage::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:22px;
+      bottom:22px;
+      width:1px;
+      background:linear-gradient(180deg,transparent,rgba(120,233,255,.26),transparent);
+      opacity:.5;
+      pointer-events:none;
+    }
+
+    .lab-footer{
+      margin-top:14px;
+      color:#6f88a8;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .lab-code-label{
+      display:inline-flex;
+      margin-top:10px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(120,233,255,.08);
+      border:1px solid rgba(120,233,255,.14);
+      color:#bfeeff;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+    }
+
+    /* =========================================================
+       COMPONENT START: Tournament rear wall section
+       Copy from .tw-wall-section to the matching CSS block.
+       Prefix: tw-
+       No JS, no audio, no WebGL, no storage.
+       ========================================================= */
+
+    .tw-wall-section{
+      position:relative;
+      width:min(900px,100%);
+      aspect-ratio:16 / 9;
+      min-height:420px;
+      border-radius:26px;
+      overflow:hidden;
+      isolation:isolate;
+      background:
+        radial-gradient(circle at 50% 8%,rgba(120,233,255,.22),transparent 30%),
+        linear-gradient(180deg,#122640 0%,#0d1a2c 42%,#060b13 100%);
+      border:1px solid rgba(120,233,255,.24);
+      box-shadow:
+        0 26px 70px rgba(0,0,0,.58),
+        inset 0 0 80px rgba(77,170,255,.11);
+    }
+
+    .tw-wall-section::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background:
+        radial-gradient(circle at 18% 22%,rgba(120,233,255,.15),transparent 26%),
+        radial-gradient(circle at 82% 18%,rgba(154,107,255,.12),transparent 28%),
+        radial-gradient(circle at 50% 96%,rgba(255,45,85,.12),transparent 30%),
+        linear-gradient(90deg,rgba(3,7,14,.72),transparent 18%,transparent 82%,rgba(3,7,14,.72));
+      pointer-events:none;
+    }
+
+    .tw-wall-section::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:18;
+      background:
+        repeating-linear-gradient(58deg,transparent 0 54px,rgba(255,255,255,.045) 55px,transparent 58px),
+        repeating-linear-gradient(-58deg,transparent 0 68px,rgba(120,233,255,.04) 69px,transparent 72px);
+      mix-blend-mode:screen;
+      opacity:.64;
+      pointer-events:none;
+    }
+
+    .tw-back-glow{
+      position:absolute;
+      inset:-20%;
+      z-index:0;
+      background:
+        radial-gradient(ellipse at 50% 0%,rgba(120,233,255,.22),transparent 38%),
+        radial-gradient(ellipse at 18% 90%,rgba(255,45,85,.16),transparent 30%),
+        radial-gradient(ellipse at 84% 78%,rgba(77,170,255,.18),transparent 34%);
+      filter:blur(10px);
+      animation:twAurora 12s ease-in-out infinite alternate;
+    }
+
+    .tw-crystal-grid{
+      position:absolute;
+      inset:-2%;
+      z-index:2;
+      opacity:.78;
+      background:
+        linear-gradient(115deg,transparent 0 12%,rgba(120,233,255,.18) 12.3%,transparent 12.8% 31%,rgba(120,233,255,.12) 31.4%,transparent 31.9% 100%),
+        linear-gradient(64deg,transparent 0 18%,rgba(255,255,255,.11) 18.2%,transparent 18.7% 46%,rgba(120,233,255,.13) 46.4%,transparent 46.9% 100%),
+        linear-gradient(-42deg,transparent 0 22%,rgba(120,233,255,.1) 22.2%,transparent 22.8% 63%,rgba(255,255,255,.08) 63.3%,transparent 63.8% 100%);
+      mask-image:linear-gradient(180deg,#000 0%,#000 82%,transparent 100%);
+      pointer-events:none;
+    }
+
+    .tw-dome{
+      position:absolute;
+      left:-10%;
+      right:-10%;
+      top:-20%;
+      height:46%;
+      z-index:3;
+      border-radius:0 0 50% 50%;
+      background:
+        radial-gradient(ellipse at 50% 100%,rgba(120,233,255,.2),transparent 55%),
+        repeating-conic-gradient(from 7deg at 50% 116%,rgba(120,233,255,.18) 0 1deg,transparent 1deg 13deg);
+      border-bottom:2px solid rgba(120,233,255,.22);
+      box-shadow:0 18px 38px rgba(0,0,0,.28),inset 0 -18px 36px rgba(120,233,255,.05);
+      pointer-events:none;
+    }
+
+    .tw-dome-ribs{
+      position:absolute;
+      left:-8%;
+      right:-8%;
+      top:0;
+      height:32%;
+      z-index:4;
+      background:
+        repeating-linear-gradient(23deg,transparent 0 42px,rgba(120,233,255,.18) 43px,rgba(120,233,255,.18) 46px,transparent 47px 96px),
+        repeating-linear-gradient(-23deg,transparent 0 48px,rgba(3,8,16,.78) 49px,rgba(3,8,16,.78) 54px,transparent 55px 102px);
+      opacity:.82;
+      mask-image:linear-gradient(180deg,#000 0%,#000 76%,transparent 100%);
+      pointer-events:none;
+    }
+
+    .tw-main-wall{
+      position:absolute;
+      left:5%;
+      right:5%;
+      bottom:8%;
+      height:70%;
+      z-index:5;
+      border-radius:34px 34px 16px 16px;
+      background:
+        linear-gradient(180deg,rgba(41,67,96,.72),rgba(8,15,26,.96)),
+        repeating-linear-gradient(90deg,transparent 0 82px,rgba(120,233,255,.07) 83px,transparent 86px);
+      border:1px solid rgba(120,233,255,.18);
+      box-shadow:
+        0 20px 50px rgba(0,0,0,.44),
+        inset 0 0 40px rgba(120,233,255,.08);
+    }
+
+    .tw-main-wall::before{
+      content:"";
+      position:absolute;
+      inset:16px 18px 20px;
+      border-radius:28px 28px 12px 12px;
+      background:
+        repeating-linear-gradient(0deg,rgba(0,0,0,.2) 0 16px,rgba(255,255,255,.025) 17px 18px),
+        linear-gradient(90deg,rgba(4,8,15,.55),transparent 20%,transparent 80%,rgba(4,8,15,.55));
+      border:1px solid rgba(255,255,255,.045);
+      opacity:.82;
+    }
+
+    .tw-main-wall::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      bottom:-4%;
+      width:84%;
+      height:24%;
+      transform:translateX(-50%);
+      border-radius:50%;
+      background:radial-gradient(ellipse,rgba(120,233,255,.16),transparent 72%);
+      filter:blur(8px);
+      pointer-events:none;
+    }
+
+    .tw-column{
+      position:absolute;
+      top:26%;
+      bottom:8%;
+      width:7.8%;
+      z-index:9;
+      background:
+        linear-gradient(90deg,rgba(4,8,15,.94),rgba(70,103,135,.86) 34%,rgba(155,210,235,.28) 50%,rgba(42,72,104,.9) 68%,rgba(3,7,13,.96));
+      border:1px solid rgba(120,233,255,.15);
+      border-radius:18px 18px 8px 8px;
+      box-shadow:
+        0 14px 26px rgba(0,0,0,.38),
+        inset 0 0 18px rgba(120,233,255,.08);
+    }
+
+    .tw-column::before,
+    .tw-column::after{
+      content:"";
+      position:absolute;
+      left:-14%;
+      right:-14%;
+      height:12%;
+      border-radius:14px;
+      background:
+        linear-gradient(180deg,rgba(106,148,184,.9),rgba(14,24,38,.95));
+      border:1px solid rgba(120,233,255,.16);
+      box-shadow:0 8px 18px rgba(0,0,0,.28);
+    }
+
+    .tw-column::before{top:-5%}
+    .tw-column::after{bottom:-4%}
+
+    .tw-column-left{left:6%}
+    .tw-column-mid-left{left:29%}
+    .tw-column-mid-right{right:29%}
+    .tw-column-right{right:6%}
+
+    .tw-arch{
+      position:absolute;
+      bottom:13%;
+      width:25%;
+      height:58%;
+      z-index:8;
+    }
+
+    .tw-arch-left{left:11%}
+    .:0;
+      z-index:21;
+      pointer-events:none;
+    }
+
+    .tw-sparks i{
+      position:absolute;
+      width:4px;
+      height:4px;
+      border-radius:50%;
+      background:var(--tw-gold);
+      box-shadow:0 0 12px var(--tw-gold);
+      animation:twSpark 2.8s ease-in-out infinite;
+    }
+
+    .tw-sparks i:nth-child(1){left:44%;top:34%;animation-delay:.1s}
+    .tw-sparks i:nth-child(2){left:57%;top:30%;animation-delay:.7s}
+    .tw-sparks i:nth-child(3){left:66%;top:46%;animation-delay:1.2s}
+    .tw-sparks i:nth-child(4){left:37%;top:51%;animation-delay:1.8s}
+    .tw-sparks i:nth-child(5){left:53%;top:62%;animation-delay:2.2s}
+
+    .tw-floor-lip{
+      position:absolute;
+      left:-4%;
+      right:-4%;
+      bottom:-10%;
+      height:28%;
+      z-index:12;
+      background:
+        radial-gradient(ellipse at 50% 0%,rgba(120,233,255,.24),transparent 58%),
+        repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 2px,transparent 2px 58px),
+        linear-gradient(180deg,rgba(75,120,160,.34),rgba(3,6,10,.94));
+      transform:perspective(360px) rotateX(58deg);
+      transform-origin:top center;
+      border-top:2px solid rgba(120,233,255,.24);
+      box-shadow:inset 0 18px 46px rgba(120,233,255,.08);
+      pointer-events:none;
+    }
+
+    .tw-depth-shadow{
+      position:absolute;
+      left:8%;
+      right:8%;
+      bottom:5%;
+      height:20%;
+      z-index:7;
+      background:radial-gradient(ellipse,rgba(0,0,0,.72),transparent 70%);
+      filter:blur(12px);
+      pointer-events:none;
+    }
+
+    @keyframes twAurora{
+      0%{transform:translate3d(-1.5%,0,0) scale(1)}
+      100%{transform:translate3d(1.5%,1%,0) scale(1.04)}
+    }
+
+    @keyframes twRing{
+      to{transform:translate(-50%,-50%) rotate(360deg)}
+    }
+
+    @keyframes twSpark{
+      0%,100%{opacity:.18;transform:translateY(0) scale(.8)}
+      50%{opacity:1;transform:translateY(-8px) scale(1.15)}
+    }
+
+    /* =========================================================
+       COMPONENT END
+       ========================================================= */
+
+    @media(max-width:720px){
+      .lab-header{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .lab-stage{
+        min-height:560px;
+        padding:14px;
+      }
+
+      .tw-wall-section{
+        aspect-ratio:9 / 13;
+        min-height:520px;
+      }
+
+      .tw-main-wall{
+        left:4%;
+        right:4%;
+        bottom:8%;
+        height:73%;
+      }
+
+      .tw-dome{
+        left:-42%;
+        right:-42%;
+      }
+
+      .tw-dome-ribs{
+        left:-44%;
+        right:-44%;
+      }
+
+      .tw-arch{
+        bottom:15%;
+        width:33%;
+        height:52%;
+      }
+
+      .tw-arch-left{
+        left:4%;
+        transform:scale(.86);
+        transform-origin:bottom left;
+      }
+
+      .tw-arch-right{
+        right:4%;
+        transform:scale(.86);
+        transform-origin:bottom right;
+      }
+
+      .tw-arch-center{
+        width:42%;
+        height:61%;
+      }
+
+      .tw-column{
+        width:9.5%;
+      }
+
+      .tw-column-left{left:2%}
+      .tw-column-mid-left{left:25%}
+      .tw-column-mid-right{right:25%}
+      .tw-column-right{right:2%}
+
+      .tw-side-caption{
+        font-size:10px;
+      }
+
+      .tw-center-caption{
+        font-size:13px;
+      }
+
+      .tw-floor-lip{
+        bottom:-8%;
+        height:24%;
+      }
+    }
+
+    @media(max-width:420px){
+      body{
+        padding-left:8px;
+        padding-right:8px;
+      }
+
+      .lab-title{
+        font-size:24px;
+      }
+
+      .lab-stage{
+        border-radius:20px;
+      }
+
+      .tw-wall-section{
+        border-radius:22px;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce){
+      .tw-back-glow,
+      .tw-energy-ring,
+      .tw-sparks i{
+        animation:none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="lab-page">
+    <header class="lab-header">
+      <div>
+        <div class="lab-kicker">Preview Lab · Game Center Asset</div>
+        <h1 class="lab-title">Задняя секция стены · Турниры</h1>
+      </div>
+      <div class="lab-note">
+        Основную комнату не трогаем. Здесь изолированно доводим один графический блок:
+        задняя стена, арочные витрины, центральная табличка «ТУРНИРЫ».
+      </div>
+    </header>
+
+    <section class="lab-stage" aria-label="Лаборатория просмотра секции Турниры">
+      <!-- COMPONENT START: Tournament rear wall section -->
+      <section class="tw-wall-section" aria-label="Секция стены Турниры">
+        <div class="tw-back-glow"></div>
+        <div class="tw-crystal-grid"></div>
+        <div class="tw-dome"></div>
+        <div class="tw-dome-ribs"></div>
+
+        <div class="tw-main-wall"></div>
+        <div class="tw-depth-shadow"></div>
+
+        <div class="tw-column tw-column-left"></div>
+        <div class="tw-column tw-column-mid-left"></div>
+        <div class="tw-column tw-column-mid-right"></div>
+        <div class="tw-column tw-column-right"></div>
+
+        <article class="tw-arch tw-arch-left">
+          <div class="tw-arch-frame"></div>
+          <div class="tw-arch-title">Рейтинг</div>
+          <div class="tw-side-icon">📊</div>
+          <div class="tw-score-lines">
+            <i></i><i></i><i></i><i></i>
+          </div>
+          <div class="tw-side-caption">Лиги<br>игроков</div>
+        </article>
+
+        <article class="tw-arch tw-arch-center">
+          <div class="tw-arch-frame"></div>
+          <div class="tw-arch-title">Турниры</div>
+          <div class="tw-door"></div>
+          <div class="tw-energy-ring"></div>
+          <div class="tw-tournament-badge">🏆</div>
+          <div class="tw-center-caption">Арены<br>сердец</div>
+          <div class="tw-sparks">
+            <i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </article>
+
+        <article class="tw-arch tw-arch-right">
+          <div class="tw-arch-frame"></div>
+          <div class="tw-arch-title">Призы</div>
+          <div class="tw-side-icon">🎁</div>
+          <div class="tw-side-caption">Награды<br>сезона</div>
+        </article>
+
+        <div class="tw-floor-lip"></div>
+      </section>
+      <!-- COMPONENT END -->
+    </section>
+
+    <footer class="lab-footer">
+      <div class="lab-code-label">copy-safe component</div>
+      <p>
+        Для переноса в общую комнату потом копируем только блок
+        <b>.tw-wall-section</b> и CSS-секции с префиксом <b>tw-</b>.
+        Сейчас это полностью автономный HTML/CSS preview без JS, audio, WebGL и storage.
+      </p>
+    </footer>
+  </main>
+</body>
+</html>
