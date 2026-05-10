@@ -54,7 +54,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-10 15:45:30 UTC
+Сгенерировано: 2026-05-10 15:46:02 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -63,6 +63,9 @@ name: Deploy Game Center to Yandex Cloud S3
 on:
   push:
     branches: [main, master]
+    paths-ignore:
+      - '.meta/**'
+      - '.github/workflows/generate-context.yml'
   workflow_dispatch:
 
 concurrency:
@@ -90,8 +93,12 @@ jobs:
             --only-show-errors \
             --exclude ".git/*" \
             --exclude ".github/*" \
+            --exclude ".meta/*" \
+            --exclude ".meta/**" \
             --exclude ".DS_Store" \
-            --exclude "README.md"
+            --exclude "README.md" \
+            --exclude "ai-rules.txt" \
+            --exclude "generate-context.js"
 
           aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./index.html "s3://$BUCKET/$PREFIX/index.html" \
             --only-show-errors \
