@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07101c">
+  <title>Зал Витрины · Game Center</title>
+  <meta name="description" content="Тестовая комната Game Center для Витрина Разбита">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="gc-app" id="app">
+    <section class="gc-top">
+      <div>
+        <div class="gc-kicker">Game Center · test room</div>
+        <h1>Зал Витрины</h1>
+      </div>
+      <div class="gc-pill" id="bridge-pill">bridge: wait</div>
+    </section>
+
+    <section class="gc-room" id="room" aria-label="360 preview room">
+      <div class="gc-panorama" id="panorama">
+        <div class="gc-panel p1"><span>Игры</span></div>
+        <div class="gc-panel p2"><span>Трофеи</span></div>
+        <div class="gc-panel p3"><span>Достижения</span></div>
+        <div class="gc-panel p4"><span>Рейтинг</span></div>
+        <div class="gc-panel p5"><span>Призы</span></div>
+        <div class="gc-panel p6"><span>Чат</span></div>
+      </div>
+
+      <div class="gc-floor"></div>
+
+      <button class="gc-hotspot h1" type="button" data-door="games">🎮<span>Игры</span></button>
+      <button class="gc-hotspot h2" type="button" data-door="achievements">🏆<span>Достижения</span></button>
+      <button class="gc-hotspot h3" type="button" data-door="rewards">🎁<span>Призы</span></button>
+
+      <div class="gc-orb">
+        <div class="gc-orb-glow"></div>
+        <div class="gc-orb-icon">💙</div>
+        <div class="gc-orb-title">Витрина Hub</div>
+        <div class="gc-orb-sub" id="user-line">ожидаем профиль...</div>
+      </div>
+
+      <div class="gc-yaw" id="yaw-line">yaw 0° · потяни комнату</div>
+    </section>
+
+    <section class="gc-stats">
+      <div class="gc-card">
+        <span>Уровень</span>
+        <b id="level">—</b>
+      </div>
+      <div class="gc-card">
+        <span>XP</span>
+        <b id="xp">—</b>
+      </div>
+      <div class="gc-card">
+        <span>Ачивки</span>
+        <b id="ach">—</b>
+      </div>
+      <div class="gc-card">
+        <span>Сейчас</span>
+        <b id="track">—</b>
+      </div>
+    </section>
+
+    <section class="gc-log" id="log">
+      <div>Система готовится...</div>
+    </section>
+  </main>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
