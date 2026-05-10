@@ -1,0 +1,746 @@
+ПРАВИЛА ДЛЯ НЕЙРОСЕТЕЙ ПО РЕПОЗИТОРИЮ vi3na1bita-games:
+
+- Ты — Senior Lead Architect и Code Optimizer с экспертным знанием JavaScript, PWA, iframe sandbox, postMessage bridge, CSS/Canvas performance и мобильной оптимизации.
+- Язык ответов: по умолчанию RU. Английский — только если явно попросят или в именах/терминах.
+- Всегда начинай с полного анализа приложения.
+- Всегда указывай точные пути файлов.
+- Любой код выводи только в тройных бэктиках с указанием языка.
+- Учитывай, что проект редактируется через web-интерфейс github.com, без локального запуска.
+- Формат изменений: -> ФАЙЛ: путь -> НАЙТИ: [фрагмент дословно] -> ЗАМЕНИТЬ НА: [полный новый блок].
+- Не генерируй файлы .meta/project-games-full.txt и .meta/project-games-adaptive.txt целиком в ответах.
+- Если нужен новый файл — присылай полный файл.
+- Если нужен патч — присылай минимальный точечный блок.
+- Стиль кода: vanilla JavaScript ESM, 2 пробела, без лишних зависимостей.
+
+АРХИТЕКТУРНЫЕ ПРАВИЛА GAME CENTER:
+
+- vi3na1bita-games — это изолированный micro-app для iframe внутри основного приложения vi3na1bita-music.
+- Основное приложение остаётся владельцем плеера, авторизации, профиля, статистики, достижений, backup/sync.
+- Game Center не имеет права вызывать play, pause, stop, mute, volume, seek, next, prev.
+- Game Center не должен создавать AudioContext, WebAudio, Howler, <audio> или игровые звуки без отдельного parent-mediated слоя.
+- Game Center не должен читать OAuth token, localStorage, IndexedDB, metaDB или parent.window.
+- Любая связь с основным приложением — только через postMessage bridge.
+- Разрешённые исходящие сообщения: GC_READY, GC_REQUEST_SNAPSHOT, GC_DOOR_CLICKED, GC_CLOSE и будущие write-limited события только после валидации parent-side.
+- Запрещённые исходящие сообщения: любые команды управления музыкой, громкостью, плейлистом, избранным, качеством.
+- Snapshot от parent считается read-only.
+- При standalone-запуске приложение должно работать как preview без parent bridge.
+- Ошибка Game Center не должна ломать основное приложение и не должна мешать воспроизведению музыки.
+- Для iOS приоритет: не мешать фоновому воспроизведению и lockscreen playback основного приложения.
+- Первая визуальная стратегия: CSS/2.5D panorama без WebGL и без heavy runtime.
+- Любой RAF/timer должен останавливаться или деградировать при document.hidden.
+- Не добавлять service worker в game repo на раннем этапе, чтобы не конфликтовать с root SW основного приложения.
+- Не создавать папку Games/ внутри этого репозитория: корень репозитория деплоится в bucket prefix /Games/.
+
+Название репозитория: vi3na1bita-games
+Адрес репозитория: https://github.com/apel-s-in/vi3na1bita-games
+Назначение: изолированный Game Center micro-app для основного приложения vi3na1bita-music.
+Публичный путь после деплоя: https://vi3na1bita.website.yandexcloud.net/Games/
+Проект делается и обслуживается средствами https://github.com/ (GitHub Pages + GitHub Actions + Yandex Object Storage).
+
+СТРУКТУРА ПРОЕКТА:
+vi3na1bita-games/
+├── .git/
+├── .github/
+│   └── workflows/
+│       ├── deploy.yml
+│       └── generate-context.yml
+├── .meta/
+├── src/
+│   └── app.js
+├── .nojekyll
+├── ai-rules.txt
+├── generate-context.js
+├── index.html
+├── README.md
+└── styles.css
+
+Сгенерировано: 2026-05-10 15:45:30 UTC
+
+//=================================================
+// FILE: /.github/workflows/deploy.yml
+name: Deploy Game Center to Yandex Cloud S3
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: yc-s3-games-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy repo root to /Games/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
+          BUCKET: vi3na1bita
+          PREFIX: Games
+        run: |
+          set -euo pipefail
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 sync ./ "s3://$BUCKET/$PREFIX/" \
+            --delete \
+            --only-show-errors \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude ".DS_Store" \
+            --exclude "README.md"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./index.html "s3://$BUCKET/$PREFIX/index.html" \
+            --only-show-errors \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html; charset=utf-8"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./styles.css "s3://$BUCKET/$PREFIX/styles.css" \
+            --only-show-errors \
+            --cache-control "public, max-age=300" \
+            --content-type "text/css; charset=utf-8"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./src/app.js "s3://$BUCKET/$PREFIX/src/app.js" \
+            --only-show-errors \
+            --cache-control "public, max-age=300" \
+            --content-type "application/javascript; charset=utf-8"
+
+//=================================================
+// FILE: /.github/workflows/generate-context.yml
+name: Generate .meta games context
+
+on:
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - '.meta/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: games-context-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate Game Center context
+        run: |
+          node generate-context.js --mode=both --max-lines=20000
+          ls -la .meta || true
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "CI: generate games .meta context"
+          branch: ${{ github.ref_name }}
+          file_pattern: ".meta/project-games-*.txt"
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+
+//=================================================
+// FILE: /ai-rules.txt
+ПРАВИЛА ДЛЯ НЕЙРОСЕТЕЙ ПО РЕПОЗИТОРИЮ vi3na1bita-games:
+
+- Ты — Senior Lead Architect и Code Optimizer с экспертным знанием JavaScript, PWA, iframe sandbox, postMessage bridge, CSS/Canvas performance и мобильной оптимизации.
+- Язык ответов: по умолчанию RU. Английский — только если явно попросят или в именах/терминах.
+- Всегда начинай с полного анализа приложения.
+- Всегда указывай точные пути файлов.
+- Любой код выводи только в тройных бэктиках с указанием языка.
+- Учитывай, что проект редактируется через web-интерфейс github.com, без локального запуска.
+- Формат изменений: -> ФАЙЛ: путь -> НАЙТИ: [фрагмент дословно] -> ЗАМЕНИТЬ НА: [полный новый блок].
+- Не генерируй файлы .meta/project-games-full.txt и .meta/project-games-adaptive.txt целиком в ответах.
+- Если нужен новый файл — присылай полный файл.
+- Если нужен патч — присылай минимальный точечный блок.
+- Стиль кода: vanilla JavaScript ESM, 2 пробела, без лишних зависимостей.
+
+АРХИТЕКТУРНЫЕ ПРАВИЛА GAME CENTER:
+
+- vi3na1bita-games — это изолированный micro-app для iframe внутри основного приложения vi3na1bita-music.
+- Основное приложение остаётся владельцем плеера, авторизации, профиля, статистики, достижений, backup/sync.
+- Game Center не имеет права вызывать play, pause, stop, mute, volume, seek, next, prev.
+- Game Center не должен создавать AudioContext, WebAudio, Howler, <audio> или игровые звуки без отдельного parent-mediated слоя.
+- Game Center не должен читать OAuth token, localStorage, IndexedDB, metaDB или parent.window.
+- Любая связь с основным приложением — только через postMessage bridge.
+- Разрешённые исходящие сообщения: GC_READY, GC_REQUEST_SNAPSHOT, GC_DOOR_CLICKED, GC_CLOSE и будущие write-limited события только после валидации parent-side.
+- Запрещённые исходящие сообщения: любые команды управления музыкой, громкостью, плейлистом, избранным, качеством.
+- Snapshot от parent считается read-only.
+- При standalone-запуске приложение должно работать как preview без parent bridge.
+- Ошибка Game Center не должна ломать основное приложение и не должна мешать воспроизведению музыки.
+- Для iOS приоритет: не мешать фоновому воспроизведению и lockscreen playback основного приложения.
+- Первая визуальная стратегия: CSS/2.5D panorama без WebGL и без heavy runtime.
+- Любой RAF/timer должен останавливаться или деградировать при document.hidden.
+- Не добавлять service worker в game repo на раннем этапе, чтобы не конфликтовать с root SW основного приложения.
+- Не создавать папку Games/ внутри этого репозитория: корень репозитория деплоится в bucket prefix /Games/.
+
+//=================================================
+// FILE: /generate-context.js
+/* eslint-disable no-console */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const argv = Object.fromEntries(process.argv.slice(2).map(a => {
+  const [k, ...r] = a.replace(/^--/, '').split('=');
+  return [k, r.join('=') === '' ? true : r.join('=')];
+}));
+
+const ROOT = path.resolve(argv.root || __dirname);
+const META_DIR = path.resolve(argv['out-dir'] || path.join(ROOT, '.meta'));
+const MODE = String(argv.mode || 'both').toLowerCase();
+const MAX_LINES = Number(argv['max-lines'] || 20000);
+
+if (!fs.existsSync(META_DIR)) fs.mkdirSync(META_DIR, { recursive: true });
+
+const FULL_FILE = path.join(META_DIR, 'project-games-full.txt');
+const ADAPTIVE_FILE = path.join(META_DIR, 'project-games-adaptive.txt');
+
+const toUnix = p => String(p || '').replace(/\\/g, '/');
+const SELF_FULL_REL = toUnix(path.relative(ROOT, FULL_FILE));
+const SELF_ADAPT_REL = toUnix(path.relative(ROOT, ADAPTIVE_FILE));
+
+const TEXT_EXTS = new Set([
+  '.html', '.htm', '.css', '.js', '.mjs', '.cjs', '.ts', '.tsx',
+  '.json', '.webmanifest', '.md', '.txt', '.yml', '.yaml', '.svg'
+]);
+
+const EXCLUDE_RAW = [
+  '.git/**',
+  '.meta/**',
+  'node_modules/**',
+  'dist/**',
+  'build/**',
+  'out/**',
+  'coverage/**',
+  '.cache/**',
+  '.vscode/**',
+  '.idea/**',
+  '.husky/**',
+  '.DS_Store',
+  '**/*.log',
+  '**/*.tmp',
+  '**/*.temp',
+  '**/*.bak',
+  '**/*.orig',
+  '**/*.rej',
+  '**/*.map',
+  '**/*.min.js',
+  '**/*.min.css',
+  'package-lock.json',
+  'yarn.lock',
+  'pnpm-lock.yaml',
+  'qwen-code-*',
+  '**/qwen-code-*',
+  '.aider*',
+  '**/.aider*',
+  '.continue/**',
+  '.copilot/**',
+  'project-full*.txt',
+  'project-adaptive*.txt',
+  'project-games-full*.txt',
+  'project-games-adaptive*.txt'
+];
+
+const BINARY_EXTS = new Set([
+  '.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif', '.ico',
+  '.mp3', '.wav', '.ogg', '.m4a', '.mp4', '.webm',
+  '.woff', '.woff2', '.ttf', '.otf',
+  '.zip', '.7z', '.rar', '.gz', '.pdf'
+]);
+
+const PRIORITY = {
+  critical: [
+    /^index\.html?$/i,
+    /^styles\.css$/i,
+    /^src\/app\.js$/i,
+    /^\.github\/workflows\/deploy\.ya?ml$/i,
+    /^\.github\/workflows\/generate-context\.ya?ml$/i,
+    /^generate-context\.js$/i,
+    /^ai-rules\.txt$/i,
+    /^README\.md$/i
+  ],
+  high: [
+    /^src\/.*\.(js|mjs|ts)$/i,
+    /^.*\.(css|html?)$/i,
+    /^\.github\/workflows\/.*\.ya?ml$/i
+  ],
+  medium: [
+    /^.*\.(js|mjs|cjs|ts|tsx|json|md|txt|ya?ml|css|html?|svg)$/i
+  ]
+};
+
+const globToRegExp = p => {
+  const hasPath = p.includes('/') || p.includes('**');
+  const esc = p
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, '___GLOBSTAR___')
+    .replace(/\*/g, '[^/]*')
+    .replace(/___GLOBSTAR___/g, '.*');
+  return hasPath ? new RegExp(`^${esc}$`) : new RegExp(`(^|/)${esc}(/|$)`);
+};
+
+const EXCLUDES = EXCLUDE_RAW.map(globToRegExp);
+
+const isExcluded = rel => {
+  const u = toUnix(rel);
+  if (!u || u === SELF_FULL_REL || u === SELF_ADAPT_REL) return true;
+  return EXCLUDES.some(re => re.test(u));
+};
+
+const isTextFile = rel => {
+  const ext = path.extname(rel).toLowerCase();
+  if (BINARY_EXTS.has(ext)) return false;
+  return TEXT_EXTS.has(ext);
+};
+
+const readText = rel => {
+  try {
+    return fs.readFileSync(path.join(ROOT, rel), 'utf8');
+  } catch (e) {
+    return `// read error: ${e.message}`;
+  }
+};
+
+const countLines = s => (String(s || '').match(/\n/g) || []).length + (String(s || '').length ? 1 : 0);
+
+const listAllEntries = (includeFiles = true) => {
+  const out = [];
+  const stack = [ROOT];
+
+  while (stack.length) {
+    const dir = stack.pop();
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const item of entries) {
+      const full = path.join(dir, item.name);
+      const rel = toUnix(path.relative(ROOT, full)) || '.';
+      if (isExcluded(rel)) continue;
+
+      if (item.isDirectory()) {
+        out.push({ rel, full, dir: true });
+        stack.push(full);
+      } else if (item.isFile() && includeFiles) {
+        out.push({ rel, full, dir: false });
+      }
+    }
+  }
+
+  return out.sort((a, b) => a.dir !== b.dir ? (a.dir ? -1 : 1) : a.rel.localeCompare(b.rel));
+};
+
+const getPriority = rel => {
+  const u = toUnix(rel);
+  return Object.keys(PRIORITY).find(level => PRIORITY[level].some(re => re.test(u))) || 'low';
+};
+
+const readRepoUrl = () => {
+  try {
+    const cfg = path.join(ROOT, '.git', 'config');
+    if (!fs.existsSync(cfg)) return '';
+    return (fs.readFileSync(cfg, 'utf8').match(/url\s*=\s*(.+)\n/) || [])[1]?.trim() || '';
+  } catch {
+    return '';
+  }
+};
+
+const renderTree = () => {
+  const lines = ['СТРУКТУРА ПРОЕКТА:', `${path.basename(ROOT)}/`];
+
+  const walk = (dir, prefix = '') => {
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    const visible = entries
+      .filter(x => !isExcluded(toUnix(path.relative(ROOT, path.join(dir, x.name)))))
+      .sort((a, b) => a.isDirectory() !== b.isDirectory() ? (a.isDirectory() ? -1 : 1) : a.name.localeCompare(b.name));
+
+    visible.forEach((x, i) => {
+      const last = i === visible.length - 1;
+      lines.push(`${prefix}${last ? '└── ' : '├── '}${x.name}${x.isDirectory() ? '/' : ''}`);
+      if (x.isDirectory()) walk(path.join(dir, x.name), `${prefix}${last ? '    ' : '│   '}`);
+    });
+  };
+
+  walk(ROOT);
+  return lines.join('\n');
+};
+
+const headerBlock = () => {
+  const rulesPath = path.join(ROOT, 'ai-rules.txt');
+  const rules = fs.existsSync(rulesPath) ? `${fs.readFileSync(rulesPath, 'utf8').trim()}\n\n` : '';
+  const repoName = String(argv['repo-name'] || path.basename(ROOT));
+  const repoUrl = String(argv['repo-url'] || readRepoUrl() || 'https://github.com/apel-s-in/vi3na1bita-games');
+
+  return `${rules}Название репозитория: ${repoName}
+Адрес репозитория: ${repoUrl}
+Назначение: изолированный Game Center micro-app для основного приложения vi3na1bita-music.
+Публичный путь после деплоя: https://vi3na1bita.website.yandexcloud.net/Games/
+Проект делается и обслуживается средствами https://github.com/ (GitHub Pages + GitHub Actions + Yandex Object Storage).
+
+${renderTree()}
+
+Сгенерировано: ${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC
+
+`;
+};
+
+const fileBlock = rel => `//=================================================
+// FILE: /${toUnix(rel)}
+${readText(rel)}
+`;
+
+const generate = mode => {
+  let out = headerBlock();
+  let lines = countLines(out);
+
+  const groups = listAllEntries(true)
+    .filter(e => !e.dir && isTextFile(e.rel))
+    .reduce((acc, e) => {
+      acc[getPriority(e.rel)].push(e.rel);
+      return acc;
+    }, { critical: [], high: [], medium: [], low: [] });
+
+  const order = mode === 'adaptive' ? ['critical', 'high', 'medium'] : ['critical', 'high', 'medium', 'low'];
+
+  for (const level of order) {
+    for (const rel of groups[level]) {
+      const block = fileBlock(rel);
+      const blockLines = countLines(block);
+      if (mode === 'adaptive' && lines + blockLines > MAX_LINES) {
+        return `${out}\n// ... adaptive context truncated by --max-lines=${MAX_LINES}\n`;
+      }
+      out += block;
+      lines += blockLines;
+    }
+  }
+
+  return out;
+};
+
+try {
+  if (MODE === 'full' || MODE === 'both') {
+    fs.writeFileSync(FULL_FILE, generate('full'), 'utf8');
+    console.log(`✅ ${FULL_FILE}`);
+  }
+
+  if (MODE === 'adaptive' || MODE === 'both') {
+    fs.writeFileSync(ADAPTIVE_FILE, generate('adaptive'), 'utf8');
+    console.log(`✅ ${ADAPTIVE_FILE}`);
+  }
+} catch (e) {
+  console.error('❌ context generation failed:', e);
+  process.exit(1);
+}
+
+//=================================================
+// FILE: /index.html
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07101c">
+  <title>Зал Витрины · Game Center</title>
+  <meta name="description" content="Тестовая комната Game Center для Витрина Разбита">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="gc-app" id="app">
+    <section class="gc-top">
+      <div>
+        <div class="gc-kicker">Game Center · test room</div>
+        <h1>Зал Витрины</h1>
+      </div>
+      <div class="gc-pill" id="bridge-pill">bridge: wait</div>
+    </section>
+
+    <section class="gc-room" id="room" aria-label="360 preview room">
+      <div class="gc-panorama" id="panorama">
+        <div class="gc-panel p1"><span>Игры</span></div>
+        <div class="gc-panel p2"><span>Трофеи</span></div>
+        <div class="gc-panel p3"><span>Достижения</span></div>
+        <div class="gc-panel p4"><span>Рейтинг</span></div>
+        <div class="gc-panel p5"><span>Призы</span></div>
+        <div class="gc-panel p6"><span>Чат</span></div>
+      </div>
+
+      <div class="gc-floor"></div>
+
+      <button class="gc-hotspot h1" type="button" data-door="games">🎮<span>Игры</span></button>
+      <button class="gc-hotspot h2" type="button" data-door="achievements">🏆<span>Достижения</span></button>
+      <button class="gc-hotspot h3" type="button" data-door="rewards">🎁<span>Призы</span></button>
+
+      <div class="gc-orb">
+        <div class="gc-orb-glow"></div>
+        <div class="gc-orb-icon">💙</div>
+        <div class="gc-orb-title">Витрина Hub</div>
+        <div class="gc-orb-sub" id="user-line">ожидаем профиль...</div>
+      </div>
+
+      <div class="gc-yaw" id="yaw-line">yaw 0° · потяни комнату</div>
+    </section>
+
+    <section class="gc-stats">
+      <div class="gc-card">
+        <span>Уровень</span>
+        <b id="level">—</b>
+      </div>
+      <div class="gc-card">
+        <span>XP</span>
+        <b id="xp">—</b>
+      </div>
+      <div class="gc-card">
+        <span>Ачивки</span>
+        <b id="ach">—</b>
+      </div>
+      <div class="gc-card">
+        <span>Сейчас</span>
+        <b id="track">—</b>
+      </div>
+    </section>
+
+    <section class="gc-log" id="log">
+      <div>Система готовится...</div>
+    </section>
+  </main>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
+
+//=================================================
+// FILE: /README.md
+# vi3na1bita-games
+
+Isolated Game Center micro-app for `vi3na1bita-music`.
+
+Important:
+- repository root is deployed into Yandex Object Storage prefix `/Games/`;
+- do not create a root `Games/` folder inside this repo;
+- no audio, no WebAudio, no direct access to parent app storage;
+- communication with main app only through `postMessage` bridge.
+
+//=================================================
+// FILE: /src/app.js
+// UID.001_(Playback safety invariant)_(game-app не управляет музыкой)_(нет audio/webAudio/playback commands)
+// UID.006_(Lazy isolated micro-app)_(работает только внутри iframe или standalone preview)_(основной app загружает его по клику)
+// UID.082_(Local truth vs external telemetry split)_(получаем только safe snapshot)_(не читаем localStorage/IndexedDB/token)
+// UID.094_(No-paralysis rule)_(ошибка Game Center не ломает основное приложение)_(только postMessage + CSS panorama)
+
+const $ = id => document.getElementById(id);
+const state = { bridgeId: '', snapshot: null, yaw: 0, dragging: false, startX: 0, startYaw: 0 };
+
+const log = msg => {
+  const box = $('log');
+  if (!box) return;
+  const row = document.createElement('div');
+  row.textContent = `[${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}] ${msg}`;
+  box.prepend(row);
+  while (box.children.length > 24) box.lastElementChild?.remove();
+};
+
+const send = (type, payload = {}) => {
+  if (!state.bridgeId || !window.parent || window.parent === window) return false;
+  try {
+    window.parent.postMessage({ kind: 'vitrina:game', bridgeId: state.bridgeId, type, payload }, '*');
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const applySnapshot = snapshot => {
+  state.snapshot = snapshot || state.snapshot || {};
+  const p = state.snapshot?.progress || {};
+  const u = state.snapshot?.user || {};
+  const pl = state.snapshot?.player || {};
+  $('level').textContent = p.level ?? '—';
+  $('xp').textContent = p.xp ?? '—';
+  $('ach').textContent = `${p.achievementsUnlocked ?? 0}/${p.achievementsTotal ?? 0}`;
+  $('track').textContent = pl.title || (pl.playing ? 'играет' : '—');
+  $('user-line').textContent = u.displayName ? `${u.displayName} · ${p.level || 1} ур.` : 'гость';
+};
+
+const updateYaw = value => {
+  state.yaw = ((value % 360) + 360) % 360;
+  const x = -state.yaw / 360 * 50;
+  $('panorama').style.transform = `translate3d(${x}%,0,0)`;
+  $('yaw-line').textContent = `yaw ${Math.round(state.yaw)}° · потяни комнату`;
+};
+
+const bindRoom = () => {
+  const room = $('room');
+  if (!room) return;
+
+  room.addEventListener('pointerdown', e => {
+    state.dragging = true;
+    state.startX = e.clientX;
+    state.startYaw = state.yaw;
+    room.setPointerCapture?.(e.pointerId);
+  });
+
+  room.addEventListener('pointermove', e => {
+    if (!state.dragging) return;
+    updateYaw(state.startYaw - (e.clientX - state.startX) * 0.42);
+  });
+
+  const end = e => {
+    state.dragging = false;
+    try { room.releasePointerCapture?.(e.pointerId); } catch {}
+  };
+
+  room.addEventListener('pointerup', end);
+  room.addEventListener('pointercancel', end);
+
+  document.querySelectorAll('[data-door]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const door = btn.dataset.door || 'unknown';
+      log(`Дверь: ${door}`);
+      send('GC_DOOR_CLICKED', { door, at: Date.now() });
+    });
+  });
+};
+
+const bindBridge = () => {
+  window.addEventListener('message', e => {
+    const d = e.data || {};
+    if (d.kind !== 'vitrina:game-host') return;
+
+    if (d.type === 'GC_INIT') {
+      state.bridgeId = d.bridgeId || d.payload?.bridgeId || '';
+      $('bridge-pill').textContent = state.bridgeId ? 'bridge: connected' : 'bridge: no id';
+      applySnapshot(d.payload?.snapshot);
+      log('GC_INIT принят от host');
+      send('GC_READY', { at: Date.now(), userAgent: navigator.userAgent.slice(0, 80) });
+      send('GC_REQUEST_SNAPSHOT');
+      return;
+    }
+
+    if (!state.bridgeId || d.bridgeId !== state.bridgeId) return;
+
+    if (d.type === 'GC_SNAPSHOT' || d.type === 'GC_HOST_STATE') {
+      applySnapshot(d.payload);
+      log(d.type === 'GC_SNAPSHOT' ? 'snapshot обновлён' : 'host state обновлён');
+    }
+  });
+
+  if (window.parent === window) {
+    $('bridge-pill').textContent = 'standalone';
+    applySnapshot({
+      user: { displayName: 'Standalone' },
+      progress: { level: 1, xp: 0, achievementsUnlocked: 0, achievementsTotal: 0 },
+      player: { title: '' }
+    });
+    log('Запущено standalone, без parent bridge');
+  } else {
+    log('Ожидаем GC_INIT от основного приложения...');
+  }
+};
+
+const init = () => {
+  bindRoom();
+  bindBridge();
+  updateYaw(Math.floor(Math.random() * 360));
+  document.addEventListener('visibilitychange', () => {
+    document.body.toggleAttribute('data-hidden', document.hidden);
+    if (document.hidden) log('document hidden: рендер только CSS, таймеров нет');
+  });
+};
+
+init();
+
+//=================================================
+// FILE: /styles.css
+:root{
+  --bg:#07101c;
+  --panel:#101a2a;
+  --panel2:#16253a;
+  --blue:#4daaff;
+  --blue2:#8ab8fd;
+  --red:#e80100;
+  --text:#eaf2ff;
+  --muted:#88a2c7;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+body{padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+button{font:inherit;-webkit-tap-highlight-color:transparent}
+.gc-app{width:100%;max-width:390px;margin:0 auto;padding:12px 0 18px}
+.gc-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.gc-kicker{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.9px;color:var(--blue2)}
+h1{margin:3px 0 0;font-size:24px;line-height:1.05}
+.gc-pill{font-size:10px;font-weight:900;color:#b7d6ff;background:rgba(77,170,255,.12);border:1px solid rgba(77,170,255,.28);border-radius:999px;padding:6px 9px;white-space:nowrap}
+
+.gc-room{position:relative;height:520px;border-radius:22px;overflow:hidden;background:radial-gradient(circle at 50% 18%,rgba(77,170,255,.22),transparent 34%),linear-gradient(180deg,#081120,#111b2b 58%,#06080d);border:1px solid rgba(77,170,255,.22);box-shadow:0 18px 54px rgba(0,0,0,.55),inset 0 0 80px rgba(77,170,255,.08);touch-action:none;user-select:none}
+.gc-panorama{position:absolute;left:-50%;top:0;width:200%;height:72%;display:flex;will-change:transform;transform:translate3d(0,0,0);transition:transform .05s linear}
+.gc-panel{position:relative;flex:0 0 16.666%;height:100%;display:flex;align-items:flex-end;justify-content:center;padding-bottom:112px;border-right:1px solid rgba(255,255,255,.05);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(0,0,0,.08))}
+.gc-panel::before{content:"";position:absolute;left:50%;bottom:72px;width:82px;height:150px;transform:translateX(-50%);border-radius:16px 16px 4px 4px;background:linear-gradient(180deg,rgba(24,48,82,.95),rgba(4,8,15,.98));border:1px solid rgba(139,190,255,.25);box-shadow:inset 0 0 28px rgba(77,170,255,.09),0 12px 25px rgba(0,0,0,.35)}
+.gc-panel span{position:relative;z-index:2;font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:#cfe3ff;text-shadow:0 2px 8px #000}
+.p1{background-color:rgba(77,170,255,.05)}
+.p2{background-color:rgba(232,1,0,.045)}
+.p3{background-color:rgba(124,77,255,.06)}
+.p4{background-color:rgba(255,183,77,.045)}
+.p5{background-color:rgba(76,175,80,.045)}
+.p6{background-color:rgba(77,170,255,.04)}
+
+.gc-floor{position:absolute;left:-25%;right:-25%;bottom:-22%;height:48%;background:radial-gradient(ellipse at 50% 0%,rgba(77,170,255,.18),transparent 60%),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 1px,transparent 1px 42px);transform:perspective(320px) rotateX(58deg);transform-origin:top center}
+
+.gc-orb{position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);width:168px;height:168px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle,rgba(77,170,255,.20),rgba(6,14,26,.94) 68%);border:1px solid rgba(139,190,255,.38);box-shadow:0 0 42px rgba(77,170,255,.28),inset 0 0 36px rgba(77,170,255,.12);pointer-events:none}
+.gc-orb-glow{position:absolute;inset:-25px;border-radius:50%;background:radial-gradient(circle,rgba(77,170,255,.24),transparent 66%);filter:blur(10px);animation:pulse 3s ease-in-out infinite}
+.gc-orb-icon,.gc-orb-title,.gc-orb-sub{position:relative}
+.gc-orb-icon{font-size:36px;filter:drop-shadow(0 0 10px rgba(77,170,255,.5))}
+.gc-orb-title{font-size:13px;font-weight:900;margin-top:8px}
+.gc-orb-sub{font-size:10px;color:var(--blue2);margin-top:3px;max-width:128px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.gc-hotspot{position:absolute;z-index:4;width:82px;height:58px;border:1px solid rgba(77,170,255,.25);border-radius:18px;background:rgba(0,0,0,.38);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;backdrop-filter:blur(8px);cursor:pointer;transition:transform .15s,background .15s}
+.gc-hotspot span{font-size:10px;font-weight:900;text-transform:uppercase;color:#dceaff}
+.gc-hotspot:active{transform:scale(.96)}
+.h1{left:16px;bottom:86px}
+.h2{left:50%;bottom:54px;transform:translateX(-50%)}
+.h2:active{transform:translateX(-50%) scale(.96)}
+.h3{right:16px;bottom:86px}
+.gc-yaw{position:absolute;left:12px;right:12px;bottom:12px;text-align:center;font-size:10px;color:#7f93b5;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:6px 10px}
+
+.gc-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gc-card{min-height:70px;border-radius:16px;background:linear-gradient(180deg,rgba(22,28,40,.96),rgba(12,16,24,.98));border:1px solid rgba(77,170,255,.16);padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:0}
+.gc-card span{display:block;font-size:10px;color:#7f93b5;text-transform:uppercase;letter-spacing:.9px;font-weight:900}
+.gc-card b{display:block;margin-top:5px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc-log{margin-top:12px;max-height:120px;overflow:auto;border-radius:16px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.07);padding:10px 12px;color:#9db7dd;font-size:11px;line-height:1.45}
+.gc-log div+div{margin-top:4px}
+
+@keyframes pulse{0%,100%{opacity:.62;transform:scale(.98)}50%{opacity:1;transform:scale(1.05)}}
+@media(max-width:360px){
+  .gc-room{height:490px}
+  .gc-orb{width:150px;height:150px}
+  .gc-hotspot{width:74px}
+}
+@media(prefers-reduced-motion:reduce){
+  .gc-orb-glow{animation:none}
+  .gc-panorama{transition:none}
+}
+
