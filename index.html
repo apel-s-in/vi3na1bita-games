@@ -6,65 +6,169 @@
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07101c">
   <title>Зал Витрины · Game Center</title>
-  <meta name="description" content="Тестовая комната Game Center для Витрина Разбита">
+  <meta name="description" content="Хрустальная комната Game Center для Витрина Разбита">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="gc-app" id="app">
-    <section class="gc-top">
-      <div>
-        <div class="gc-kicker">Game Center · test room</div>
+    <header class="gc-top">
+      <div class="gc-titlebox">
+        <div class="gc-kicker">Витрина Разбита · Game Center</div>
         <h1>Зал Витрины</h1>
       </div>
       <div class="gc-pill" id="bridge-pill">bridge: wait</div>
-    </section>
+    </header>
 
-    <section class="gc-room" id="room" aria-label="360 preview room">
+    <section class="gc-room" id="room" aria-label="Хрустальная комната Game Center">
+      <div class="gc-aurora"></div>
+      <div class="gc-stars"></div>
+      <div class="gc-dome"></div>
+      <div class="gc-dome-ribs"></div>
+
       <div class="gc-panorama" id="panorama">
-        <div class="gc-panel p1"><span>Игры</span></div>
-        <div class="gc-panel p2"><span>Трофеи</span></div>
-        <div class="gc-panel p3"><span>Достижения</span></div>
-        <div class="gc-panel p4"><span>Рейтинг</span></div>
-        <div class="gc-panel p5"><span>Призы</span></div>
-        <div class="gc-panel p6"><span>Чат</span></div>
+        <article class="gc-sector sector-games">
+          <div class="gc-sector-window"></div>
+          <div class="gc-doorframe">
+            <div class="gc-sign">Game Hub</div>
+            <button class="gc-door" type="button" data-door="games">
+              <span class="gc-door-icon">🎮</span>
+              <span>Игровые<br>Витрины</span>
+            </button>
+          </div>
+          <div class="gc-mini-vitrine left">
+            <span>🧙</span>
+            <b>Квесты</b>
+          </div>
+        </article>
+
+        <article class="gc-sector sector-trophies">
+          <div class="gc-sector-window"></div>
+          <div class="gc-doorframe">
+            <div class="gc-sign">Трофеи Fame</div>
+            <button class="gc-door" type="button" data-door="trophies">
+              <span class="gc-door-icon">🏆</span>
+              <span>Зал<br>Трофеев</span>
+            </button>
+          </div>
+          <div class="gc-mini-vitrine right">
+            <span>💎</span>
+            <b>Редкие</b>
+          </div>
+        </article>
+
+        <article class="gc-sector sector-achievements">
+          <div class="gc-sector-window"></div>
+          <div class="gc-doorframe">
+            <div class="gc-sign">Не всё равно</div>
+            <button class="gc-door" type="button" data-door="achievements">
+              <span class="gc-door-icon">✨</span>
+              <span>Достижения</span>
+            </button>
+          </div>
+          <div class="gc-achievement-map">
+            <i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </article>
+
+        <article class="gc-sector sector-tournaments">
+          <div class="gc-sector-window"></div>
+          <div class="gc-doorframe">
+            <div class="gc-sign">Турниры</div>
+            <button class="gc-door" type="button" data-door="tournaments">
+              <span class="gc-door-icon">⚔️</span>
+              <span>Арены<br>Сердец</span>
+            </button>
+          </div>
+          <div class="gc-score-ghost">+180</div>
+        </article>
+
+        <article class="gc-sector sector-shop">
+          <div class="gc-sector-window"></div>
+          <div class="gc-doorframe">
+            <div class="gc-sign">Магазин</div>
+            <button class="gc-door" type="button" data-door="shop">
+              <span class="gc-door-icon">🛒</span>
+              <span>Призы<br>и Скины</span>
+            </button>
+          </div>
+          <div class="gc-mini-vitrine left">
+            <span>🎁</span>
+            <b>Дропы</b>
+          </div>
+        </article>
+
+        <article class="gc-sector sector-profile">
+          <div class="gc-sector-window"></div>
+          <div class="gc-doorframe">
+            <div class="gc-sign">Личный кабинет</div>
+            <button class="gc-door" type="button" data-door="profile">
+              <span class="gc-door-icon">👤</span>
+              <span>Профиль<br>Игрока</span>
+            </button>
+          </div>
+          <div class="gc-mini-vitrine right">
+            <span>🔐</span>
+            <b>Аккаунт</b>
+          </div>
+        </article>
       </div>
 
       <div class="gc-floor"></div>
-
-      <button class="gc-hotspot h1" type="button" data-door="games">🎮<span>Игры</span></button>
-      <button class="gc-hotspot h2" type="button" data-door="achievements">🏆<span>Достижения</span></button>
-      <button class="gc-hotspot h3" type="button" data-door="rewards">🎁<span>Призы</span></button>
-
-      <div class="gc-orb">
-        <div class="gc-orb-glow"></div>
-        <div class="gc-orb-icon">💙</div>
-        <div class="gc-orb-title">Витрина Hub</div>
-        <div class="gc-orb-sub" id="user-line">ожидаем профиль...</div>
+      <div class="gc-floor-runes">
+        <span>01. Личный кабинет</span>
+        <span>02. Манифест</span>
+        <span>03. Статистика</span>
       </div>
+
+      <section class="gc-heart-stage" aria-label="Центральное сердце Витрины">
+        <canvas class="gc-heart-canvas" id="heart-canvas" aria-hidden="true"></canvas>
+
+        <div class="gc-heart-aura"></div>
+
+        <div class="gc-heart-3d" aria-hidden="true">
+          <div class="gc-heart-shadow"></div>
+          <div class="gc-heart-gem">
+            <span class="facet f1"></span>
+            <span class="facet f2"></span>
+            <span class="facet f3"></span>
+            <span class="facet f4"></span>
+            <span class="facet f5"></span>
+            <span class="facet f6"></span>
+          </div>
+          <div class="gc-heart-cut cut-a"></div>
+          <div class="gc-heart-cut cut-b"></div>
+          <div class="gc-heart-cut cut-c"></div>
+        </div>
+
+        <div class="gc-heart-label">
+          <b>Сердце Витрины</b>
+          <span id="user-line">ожидаем профиль...</span>
+        </div>
+      </section>
+
+      <nav class="gc-hud" aria-label="Статистика Game Center">
+        <div class="gc-card">
+          <span>Уровень</span>
+          <b id="level">—</b>
+        </div>
+        <div class="gc-card">
+          <span>XP</span>
+          <b id="xp">—</b>
+        </div>
+        <div class="gc-card">
+          <span>Ачивки</span>
+          <b id="ach">—</b>
+        </div>
+        <div class="gc-card gc-card-wide">
+          <span>Сейчас играет</span>
+          <b id="track">—</b>
+        </div>
+      </nav>
 
       <div class="gc-yaw" id="yaw-line">yaw 0° · потяни комнату</div>
     </section>
 
-    <section class="gc-stats">
-      <div class="gc-card">
-        <span>Уровень</span>
-        <b id="level">—</b>
-      </div>
-      <div class="gc-card">
-        <span>XP</span>
-        <b id="xp">—</b>
-      </div>
-      <div class="gc-card">
-        <span>Ачивки</span>
-        <b id="ach">—</b>
-      </div>
-      <div class="gc-card">
-        <span>Сейчас</span>
-        <b id="track">—</b>
-      </div>
-    </section>
-
-    <section class="gc-log" id="log">
+    <section class="gc-log" id="log" aria-label="Лог Game Center">
       <div>Система готовится...</div>
     </section>
   </main>
