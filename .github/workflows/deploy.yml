@@ -1,0 +1,49 @@
+name: Deploy Game Center to Yandex Cloud S3
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: yc-s3-games-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy repo root to /Games/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
+          BUCKET: vi3na1bita
+          PREFIX: Games
+        run: |
+          set -euo pipefail
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 sync ./ "s3://$BUCKET/$PREFIX/" \
+            --delete \
+            --only-show-errors \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude ".DS_Store" \
+            --exclude "README.md"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./index.html "s3://$BUCKET/$PREFIX/index.html" \
+            --only-show-errors \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html; charset=utf-8"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./styles.css "s3://$BUCKET/$PREFIX/styles.css" \
+            --only-show-errors \
+            --cache-control "public, max-age=300" \
+            --content-type "text/css; charset=utf-8"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./src/app.js "s3://$BUCKET/$PREFIX/src/app.js" \
+            --only-show-errors \
+            --cache-control "public, max-age=300" \
+            --content-type "application/javascript; charset=utf-8"
