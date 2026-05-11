@@ -4,172 +4,156 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#07101c">
-  <title>Зал Витрины · Game Center</title>
-  <meta name="description" content="Хрустальная комната Game Center для Витрина Разбита">
+  <meta name="theme-color" content="#07091a">
+  <title>Башня Витрины · Game Center</title>
+  <meta name="description" content="Музыкальный игровой центр Витрина Разбита">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main class="gc-app" id="app">
-    <header class="gc-top">
-      <div class="gc-titlebox">
-        <div class="gc-kicker">Витрина Разбита · Game Center</div>
-        <h1>Зал Витрины</h1>
-      </div>
-      <div class="gc-pill" id="bridge-pill">bridge: wait</div>
-    </header>
+  <main class="bt-app" id="app">
+    <section class="bt-scene" id="scene" aria-label="Башня Витрины">
+      <canvas class="bt-particles" id="particles" aria-hidden="true"></canvas>
 
-    <section class="gc-room" id="room" aria-label="Хрустальная комната Game Center">
-      <div class="gc-aurora"></div>
-      <div class="gc-stars"></div>
-      <div class="gc-dome"></div>
-      <div class="gc-dome-ribs"></div>
-
-      <div class="gc-panorama" id="panorama">
-        <article class="gc-sector sector-games">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Game Hub</div>
-            <button class="gc-door" type="button" data-door="games">
-              <span class="gc-door-icon">🎮</span>
-              <span>Игровые<br>Витрины</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine left">
-            <span>🧙</span>
-            <b>Квесты</b>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-trophies">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Трофеи Fame</div>
-            <button class="gc-door" type="button" data-door="trophies">
-              <span class="gc-door-icon">🏆</span>
-              <span>Зал<br>Трофеев</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine right">
-            <span>💎</span>
-            <b>Редкие</b>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-achievements">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Не всё равно</div>
-            <button class="gc-door" type="button" data-door="achievements">
-              <span class="gc-door-icon">✨</span>
-              <span>Достижения</span>
-            </button>
-          </div>
-          <div class="gc-achievement-map">
-            <i></i><i></i><i></i><i></i><i></i>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-tournaments">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Турниры</div>
-            <button class="gc-door" type="button" data-door="tournaments">
-              <span class="gc-door-icon">⚔️</span>
-              <span>Арены<br>Сердец</span>
-            </button>
-          </div>
-          <div class="gc-score-ghost">+180</div>
-        </article>
-
-        <article class="gc-sector sector-shop">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Магазин</div>
-            <button class="gc-door" type="button" data-door="shop">
-              <span class="gc-door-icon">🛒</span>
-              <span>Призы<br>и Скины</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine left">
-            <span>🎁</span>
-            <b>Дропы</b>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-profile">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Личный кабинет</div>
-            <button class="gc-door" type="button" data-door="profile">
-              <span class="gc-door-icon">👤</span>
-              <span>Профиль<br>Игрока</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine right">
-            <span>🔐</span>
-            <b>Аккаунт</b>
-          </div>
-        </article>
+      <div class="bt-layer bt-layer-bg" data-depth="0.05">
+        <img src="./assets/tower/bg.webp" alt="">
       </div>
 
-      <div class="gc-floor"></div>
-      <div class="gc-floor-runes">
-        <span>01. Личный кабинет</span>
-        <span>02. Манифест</span>
-        <span>03. Статистика</span>
+      <svg class="bt-energy" viewBox="0 0 1000 1600" preserveAspectRatio="none" aria-hidden="true">
+        <path class="bt-energy-line line-a" d="M780 120 C850 230 720 310 810 430 C920 590 760 700 850 850 C930 990 780 1150 900 1320" />
+        <path class="bt-energy-line line-b" d="M410 260 C360 390 470 510 390 650 C300 790 440 910 350 1040 C270 1180 370 1320 290 1500" />
+        <path class="bt-energy-line line-c" d="M520 560 C600 690 430 820 560 960 C690 1100 500 1240 610 1450" />
+      </svg>
+
+      <div class="bt-layer bt-layer-tower" data-depth="0.16">
+        <img src="./assets/tower/tower.webp" alt="">
       </div>
 
-      <section class="gc-heart-stage" aria-label="Центральное сердце Витрины">
-        <canvas class="gc-heart-canvas" id="heart-canvas" aria-hidden="true"></canvas>
+      <div class="bt-layer bt-layer-fog bt-layer-fog-back" data-depth="0.09">
+        <img src="./assets/tower/fog-back.webp" alt="">
+      </div>
 
-        <div class="gc-heart-aura"></div>
+      <button class="bt-hotspot hotspot-melody is-primary" type="button" data-door="melody" data-depth="0.28">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-melody.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Зал Мелодий</b>
+          <small>Угадай песню</small>
+        </span>
+      </button>
 
-        <div class="gc-heart-3d" aria-hidden="true">
-          <div class="gc-heart-shadow"></div>
-          <div class="gc-heart-gem">
-            <span class="facet f1"></span>
-            <span class="facet f2"></span>
-            <span class="facet f3"></span>
-            <span class="facet f4"></span>
-            <span class="facet f5"></span>
-            <span class="facet f6"></span>
-          </div>
-          <div class="gc-heart-cut cut-a"></div>
-          <div class="gc-heart-cut cut-b"></div>
-          <div class="gc-heart-cut cut-c"></div>
-        </div>
+      <button class="bt-hotspot hotspot-words" type="button" data-door="words" data-depth="0.24">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-words.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Кузница Слов</b>
+          <small>Собери строки</small>
+        </span>
+      </button>
 
-        <div class="gc-heart-label">
+      <button class="bt-hotspot hotspot-oracle" type="button" data-door="oracle" data-depth="0.32">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-oracle.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Оракул Текстов</b>
+          <small>Викторины</small>
+        </span>
+      </button>
+
+      <button class="bt-hotspot hotspot-heart is-heart" type="button" data-door="heart" data-depth="0.36">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-heart.webp" alt="">
+        <span class="bt-heart-pulse"></span>
+        <span class="bt-hotspot-text">
           <b>Сердце Витрины</b>
-          <span id="user-line">ожидаем профиль...</span>
-        </div>
-      </section>
+          <small>Собери сердце из осколков</small>
+        </span>
+      </button>
 
-      <nav class="gc-hud" aria-label="Статистика Game Center">
-        <div class="gc-card">
-          <span>Уровень</span>
-          <b id="level">—</b>
-        </div>
-        <div class="gc-card">
-          <span>XP</span>
-          <b id="xp">—</b>
-        </div>
-        <div class="gc-card">
-          <span>Ачивки</span>
-          <b id="ach">—</b>
-        </div>
-        <div class="gc-card gc-card-wide">
-          <span>Сейчас играет</span>
-          <b id="track">—</b>
-        </div>
-      </nav>
+      <button class="bt-hotspot hotspot-arena" type="button" data-door="arena" data-depth="0.3">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-arena.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Арена Турниров</b>
+          <small>Соревнования</small>
+        </span>
+      </button>
 
-      <div class="gc-yaw" id="yaw-line">yaw 0° · потяни комнату</div>
-    </section>
+      <button class="bt-hotspot hotspot-fame" type="button" data-door="fame" data-depth="0.2">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-crown.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Зал Славы</b>
+          <small>Рейтинг игроков</small>
+        </span>
+      </button>
 
-    <section class="gc-log" id="log" aria-label="Лог Game Center">
-      <div>Система готовится...</div>
+      <button class="bt-hotspot hotspot-daily" type="button" data-door="daily" data-depth="0.34">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-daily.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Ежедневный вызов</b>
+          <small>Игра дня</small>
+        </span>
+      </button>
+
+      <button class="bt-hotspot hotspot-chest" type="button" data-door="chest" data-depth="0.34">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-chest.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Сундук Осколков</b>
+          <small>Награды</small>
+        </span>
+      </button>
+
+      <button class="bt-hotspot hotspot-collection" type="button" data-door="collection" data-depth="0.25">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-cards.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Коллекция</b>
+          <small>Карточки песен</small>
+        </span>
+      </button>
+
+      <div class="bt-layer bt-layer-fog bt-layer-fog-front" data-depth="0.42">
+        <img src="./assets/tower/fog-front.webp" alt="">
+      </div>
+
+      <header class="bt-topbar">
+        <div class="bt-title">
+          <h1>Башня Витрины</h1>
+          <p>Музыкальный игровой центр</p>
+        </div>
+
+        <div class="bt-profile">
+          <div class="bt-shards">
+            <img src="./assets/tower/shard-red.webp" alt="">
+            <span id="shards-count">1250</span>
+            <small>осколков</small>
+          </div>
+
+          <div class="bt-avatar">
+            <img src="./assets/tower/avatar.webp" alt="">
+          </div>
+        </div>
+      </header>
+
+      <footer class="bt-nav" aria-label="Навигация Game Center">
+        <button class="bt-nav-item is-active" type="button" data-nav="games">
+          <span>🎮</span>
+          <b>Игры</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-nav="tournaments">
+          <span>🏆</span>
+          <b>Турниры</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-nav="rating">
+          <span>📊</span>
+          <b>Рейтинг</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-nav="profile">
+          <span>👤</span>
+          <b>Профиль</b>
+        </button>
+      </footer>
+
+      <div class="bt-bridge-pill" id="bridge-pill">bridge: wait</div>
+      <div class="bt-toast" id="toast" hidden></div>
     </section>
   </main>
 
