@@ -15,16 +15,17 @@ const state = {
   targetY: 0,
   lookX: 0,
   lookY: 0,
-  startX: 0,
-  startY: 0,
   dragX: 0,
   dragY: 0,
   targetDragX: 0,
   targetDragY: 0,
-  raf: 0
+  parallaxRaf: 0,
+  parallaxFrames: 0,
+  artRatio: 9 / 16
 };
 
 const scene = $('scene');
+const world = $('world');
 
 const send = (type, payload = {}) => {
   if (!state.bridgeId || !window.parent || window.parent === window) return false;
@@ -46,7 +47,7 @@ const showToast = text => {
   clearTimeout(showToast.timer);
   showToast.timer = setTimeout(() => {
     toast.hidden = true;
-  }, 1700);
+  }, 1500);
 };
 
 const fmtNum = value => {
@@ -101,6 +102,140 @@ const bindBridge = () => {
   }
 };
 
+const bindImageFallbacks = () => {
+  document.querySelectorAll('img').forEach(img => {
+    img.addEventListener('error', () => {
+      img.hidden = true;
+      img.closest('.bt-hotspot')?.classList.add('is-missing-icon');
+    }, { once: true });
+  });
+};
+
+const fitWorldToBackground = () => {
+  if (!scene || !world) return;
+
+  const rect = scene.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const ratio = state.artRatio || (9 / 16);
+
+  let h = rect.height;
+  let w = h * ratio;
+
+  if (w < rect.width) {
+    w = rect.width;
+    h = w / ratio;
+  }
+
+  world.style.width = `${Math.ceil(w)}px`;
+  world.style.height = `${Math.ceil(h)}px`;
+};
+
+const bindArtRatio = () => {
+  const img = $('bg-image');
+
+  const apply = () => {
+    if (img?.naturalWidth && img?.naturalHeight) {
+      state.artRatio = img.naturalWidth / img.naturalHeight;
+      scene?.style.setProperty('--bt-art-ratio', `${img.naturalWidth} / ${img.naturalHeight}`);
+    }
+    fitWorldToBackground();
+  };
+
+  if (img?.complete) apply();
+  else img?.addEventListener('load', apply, { once: true });
+
+  fitWorldToBackground();
+};
+
+const getPointerLook = e => {
+  const r = scene.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+
+  return {
+    x: Math.max(-1, Math.min(1, (e.clientX - cx) / (r.width / 2))),
+    y: Math.max(-1, Math.min(1, (e.clientY - cy) / (r.height / 2)))
+  };
+};
+
+const applyParallaxFrame = () => {
+  state.parallaxRaf = 0;
+
+  state.lookX += (state.targetX - state.lookX) * 0.12;
+  state.lookY += (state.targetY - state.lookY) * 0.12;
+  state.dragX += (state.targetDragX - state.dragX) * 0.1;
+  state.dragY += (state.targetDragY - state.dragY) * 0.1;
+
+  const stillMoving =
+    Math.abs(state.targetX - state.lookX) > 0.002 ||
+    Math.abs(state.targetY - state.lookY) > 0.002 ||
+    Math.abs(state.targetDragX - state.dragX) > 0.05 ||
+    Math.abs(state.targetDragY - state.dragY) > 0.05 ||
+    state.pointerDown;
+
+  document.querySelectorAll('[data-depth]').forEach(el => {
+    const depth = Number(el.dataset.depth || 0);
+    const x = state.dragX * depth + state.lookX * depth * 28;
+    const y = state.dragY * depth + state.lookY * depth * 18;
+
+    if (el.classList.contains('bt-hotspot')) {
+      el.style.translate = `${x}px ${y}px`;
+    } else {
+      el.style.transform = `translate3d(${x}px,${y}px,0)`;
+    }
+  });
+
+  if (stillMoving && state.parallaxFrames < 90 && !document.hidden) {
+    state.parallaxFrames++;
+    state.parallaxRaf = requestAnimationFrame(applyParallaxFrame);
+  } else {
+    state.parallaxFrames = 0;
+  }
+};
+
+const requestParallax = () => {
+  if (prefersReduced || document.hidden || state.parallaxRaf) return;
+  state.parallaxFrames = 0;
+  state.parallaxRaf = requestAnimationFrame(applyParallaxFrame);
+};
+
+const bindParallaxInput = () => {
+  if (!scene) return;
+
+  scene.addEventListener('pointerdown', e => {
+    if (e.target?.closest?.('button')) return;
+
+    state.pointerDown = true;
+    scene.setPointerCapture?.(e.pointerId);
+    requestParallax();
+  });
+
+  scene.addEventListener('pointermove', e => {
+    const look = getPointerLook(e);
+    state.targetX = look.x;
+    state.targetY = look.y;
+
+    if (state.pointerDown) {
+      state.targetDragX += (e.movementX || 0) * 0.12;
+      state.targetDragY += (e.movementY || 0) * 0.05;
+      state.targetDragX = Math.max(-42, Math.min(42, state.targetDragX));
+      state.targetDragY = Math.max(-18, Math.min(18, state.targetDragY));
+    }
+
+    requestParallax();
+  });
+
+  const end = e => {
+    state.pointerDown = false;
+    try { scene.releasePointerCapture?.(e.pointerId); } catch {}
+    requestParallax();
+  };
+
+  scene.addEventListener('pointerup', end);
+  scene.addEventListener('pointercancel', end);
+};
+
 const bindHotspots = () => {
   document.querySelectorAll('.bt-hotspot').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -117,8 +252,7 @@ const bindHotspots = () => {
 
       showToast(`${title}: скоро откроется`);
       send('GC_DOOR_CLICKED', { door, at: Date.now() });
-
-      spawnBurst(btn);
+      particleEngine?.burstElement?.(btn);
     });
   });
 
@@ -131,83 +265,14 @@ const bindHotspots = () => {
       const nav = btn.dataset.nav || 'unknown';
       showToast(`Раздел: ${btn.textContent.trim()}`);
       send('GC_DOOR_CLICKED', { door: `nav:${nav}`, at: Date.now() });
+      particleEngine?.burstElement?.(btn);
     });
-  });
-};
-
-const getPointerLook = e => {
-  const r = scene.getBoundingClientRect();
-  const cx = r.left + r.width / 2;
-  const cy = r.top + r.height / 2;
-
-  return {
-    x: Math.max(-1, Math.min(1, (e.clientX - cx) / (r.width / 2))),
-    y: Math.max(-1, Math.min(1, (e.clientY - cy) / (r.height / 2)))
-  };
-};
-
-const bindParallaxInput = () => {
-  if (!scene) return;
-
-  scene.addEventListener('pointerdown', e => {
-    if (e.target?.closest?.('button')) return;
-
-    state.pointerDown = true;
-    state.startX = e.clientX;
-    state.startY = e.clientY;
-    scene.setPointerCapture?.(e.pointerId);
-  });
-
-  scene.addEventListener('pointermove', e => {
-    const look = getPointerLook(e);
-    state.targetX = look.x;
-    state.targetY = look.y;
-
-    if (state.pointerDown) {
-      state.targetDragX += (e.movementX || 0) * 0.18;
-      state.targetDragY += (e.movementY || 0) * 0.08;
-      state.targetDragX = Math.max(-90, Math.min(90, state.targetDragX));
-      state.targetDragY = Math.max(-40, Math.min(40, state.targetDragY));
-    }
-  });
-
-  const end = e => {
-    state.pointerDown = false;
-    try { scene.releasePointerCapture?.(e.pointerId); } catch {}
-  };
-
-  scene.addEventListener('pointerup', end);
-  scene.addEventListener('pointercancel', end);
-
-  window.addEventListener('deviceorientation', e => {
-    if (!Number.isFinite(e.gamma) || !Number.isFinite(e.beta)) return;
-    state.targetX = Math.max(-1, Math.min(1, e.gamma / 28));
-    state.targetY = Math.max(-1, Math.min(1, (e.beta - 45) / 42));
-  }, { passive: true });
-};
-
-const updateParallax = () => {
-  state.lookX += (state.targetX - state.lookX) * 0.075;
-  state.lookY += (state.targetY - state.lookY) * 0.075;
-  state.dragX += (state.targetDragX - state.dragX) * 0.08;
-  state.dragY += (state.targetDragY - state.dragY) * 0.08;
-
-  document.querySelectorAll('[data-depth]').forEach(el => {
-    const depth = Number(el.dataset.depth || 0);
-    const x = state.dragX * depth + state.lookX * depth * 46;
-    const y = state.dragY * depth + state.lookY * depth * 30;
-
-    if (el.classList.contains('bt-hotspot')) {
-      el.style.translate = `${x}px ${y}px`;
-    } else {
-      el.style.transform = `translate3d(${x}px,${y}px,0)`;
-    }
   });
 };
 
 const createParticleEngine = canvas => {
   if (!canvas || prefersReduced) {
-    return { start() {}, stop() {}, burst() {}, resize() {} };
+    return { burstElement() {}, resize() {}, stop() {} };
   }
 
   const ctx = canvas.getContext('2d', { alpha: true });
@@ -216,51 +281,33 @@ const createParticleEngine = canvas => {
   let height = 0;
   let dpr = 1;
   let raf = 0;
-  let running = false;
 
   const rand = (min, max) => min + Math.random() * (max - min);
 
   const resize = () => {
     const r = canvas.getBoundingClientRect();
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    dpr = Math.min(1.25, window.devicePixelRatio || 1);
     width = Math.max(1, Math.floor(r.width * dpr));
     height = Math.max(1, Math.floor(r.height * dpr));
     canvas.width = width;
     canvas.height = height;
   };
 
-  const addParticle = (x, y, burst = false) => {
+  const addParticle = (x, y) => {
     particles.push({
       x,
       y,
-      vx: rand(-0.35, 0.35) * dpr * (burst ? 6 : 1),
-      vy: rand(-0.55, -0.05) * dpr * (burst ? 6 : 1),
-      life: burst ? rand(28, 62) : rand(90, 220),
-      maxLife: burst ? 62 : 220,
-      size: rand(1, burst ? 4 : 2.6) * dpr,
-      hue: Math.random() > 0.35 ? rand(186, 198) : rand(342, 354)
+      vx: rand(-2.8, 2.8) * dpr,
+      vy: rand(-3.4, 1.2) * dpr,
+      life: rand(18, 42),
+      maxLife: 42,
+      size: rand(1, 3.2) * dpr,
+      hue: Math.random() > 0.45 ? rand(186, 196) : rand(344, 354)
     });
   };
 
-  const seed = () => {
-    particles.length = 0;
-    for (let i = 0; i < 95; i++) {
-      addParticle(rand(0, width), rand(height * .12, height * .95));
-    }
-  };
-
-  const burst = (clientX, clientY) => {
-    const r = canvas.getBoundingClientRect();
-    const x = (clientX - r.left) * dpr;
-    const y = (clientY - r.top) * dpr;
-
-    for (let i = 0; i < 38; i++) addParticle(x, y, true);
-  };
-
   const frame = () => {
-    if (!running || document.hidden) return;
-
-    updateParallax();
+    raf = 0;
 
     ctx.clearRect(0, 0, width, height);
     ctx.globalCompositeOperation = 'lighter';
@@ -271,78 +318,90 @@ const createParticleEngine = canvas => {
       p.life -= 1;
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.006 * dpr;
+      p.vy += 0.045 * dpr;
 
       const alpha = Math.max(0, p.life / p.maxLife);
-      ctx.fillStyle = `hsla(${p.hue}, 100%, 62%, ${alpha * .8})`;
-      ctx.shadowBlur = 12 * dpr;
-      ctx.shadowColor = `hsla(${p.hue}, 100%, 60%, .9)`;
+
+      ctx.fillStyle = `hsla(${p.hue}, 100%, 62%, ${alpha * .75})`;
+      ctx.shadowBlur = 7 * dpr;
+      ctx.shadowColor = `hsla(${p.hue}, 100%, 60%, .75)`;
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
 
-      if (p.life <= 0 || p.y < -20 || p.y > height + 30) {
-        particles.splice(i, 1);
-      }
+      if (p.life <= 0) particles.splice(i, 1);
     }
 
     ctx.shadowBlur = 0;
 
-    while (particles.length < 95) {
-      addParticle(rand(0, width), height + rand(0, 80) * dpr);
+    if (particles.length && !document.hidden) {
+      raf = requestAnimationFrame(frame);
     }
-
-    raf = requestAnimationFrame(frame);
   };
 
-  const start = () => {
-    if (running || document.hidden) return;
-    running = true;
-    raf = requestAnimationFrame(frame);
+  const burst = (clientX, clientY) => {
+    if (document.hidden) return;
+
+    const r = canvas.getBoundingClientRect();
+    const x = (clientX - r.left) * dpr;
+    const y = (clientY - r.top) * dpr;
+
+    for (let i = 0; i < 18; i++) addParticle(x, y);
+
+    if (!raf) raf = requestAnimationFrame(frame);
+  };
+
+  const burstElement = el => {
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height / 2);
   };
 
   const stop = () => {
-    running = false;
+    particles.length = 0;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
+    ctx.clearRect(0, 0, width, height);
   };
 
   resize();
-  seed();
 
-  return { start, stop, burst, resize: () => { resize(); seed(); } };
+  return { burstElement, resize, stop };
 };
 
 let particleEngine = null;
 
-const spawnBurst = el => {
-  if (!particleEngine || !el) return;
-  const r = el.getBoundingClientRect();
-  particleEngine.burst(r.left + r.width / 2, r.top + r.height / 2);
-};
-
 const init = () => {
+  bindImageFallbacks();
+  bindArtRatio();
   bindBridge();
   bindHotspots();
   bindParallaxInput();
 
   particleEngine = createParticleEngine($('particles'));
-  particleEngine.start();
 
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => particleEngine.resize(), 140);
-  });
+    resizeTimer = setTimeout(() => {
+      fitWorldToBackground();
+      particleEngine?.resize?.();
+      requestParallax();
+    }, 120);
+  }, { passive: true });
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      particleEngine.stop();
-    } else {
-      particleEngine.resize();
-      particleEngine.start();
+      particleEngine?.stop?.();
+      if (state.parallaxRaf) cancelAnimationFrame(state.parallaxRaf);
+      state.parallaxRaf = 0;
+      return;
     }
+
+    fitWorldToBackground();
+    particleEngine?.resize?.();
+    requestParallax();
   });
 };
 
