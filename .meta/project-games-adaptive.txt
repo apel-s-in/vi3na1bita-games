@@ -59,7 +59,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-11 14:55:54 UTC
+Сгенерировано: 2026-05-11 16:18:02 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -483,147 +483,24 @@ try {
 <body>
   <main class="bt-app" id="app">
     <section class="bt-scene" id="scene" aria-label="Башня Витрины">
-      <canvas class="bt-particles" id="particles" aria-hidden="true"></canvas>
+      <div class="bt-world" id="world">
+        <img class="bt-bg" id="bg-image" src="./assets/tower/bg.webp" alt="Башня Витрины" decoding="async" fetchpriority="high">
 
-      <div class="bt-world" id="world" aria-hidden="false">
-        <div class="bt-layer bt-layer-bg" data-depth="0.02">
-          <img id="bg-image" src="./assets/tower/bg.webp" alt="" decoding="async" fetchpriority="high">
-        </div>
+        <button class="bt-hotspot hotspot-melody" type="button" data-door="melody" aria-label="Зал Мелодий"></button>
+        <button class="bt-hotspot hotspot-words" type="button" data-door="words" aria-label="Кузница Слов"></button>
+        <button class="bt-hotspot hotspot-oracle" type="button" data-door="oracle" aria-label="Оракул Текстов"></button>
+        <button class="bt-hotspot hotspot-heart" type="button" data-door="heart" aria-label="Сердце Витрины"></button>
+        <button class="bt-hotspot hotspot-arena" type="button" data-door="arena" aria-label="Арена Турниров"></button>
+        <button class="bt-hotspot hotspot-fame" type="button" data-door="fame" aria-label="Зал Славы"></button>
+        <button class="bt-hotspot hotspot-daily" type="button" data-door="daily" aria-label="Ежедневный вызов"></button>
+        <button class="bt-hotspot hotspot-chest" type="button" data-door="chest" aria-label="Сундук Осколков"></button>
+        <button class="bt-hotspot hotspot-collection" type="button" data-door="collection" aria-label="Коллекция"></button>
 
-        <svg class="bt-energy" viewBox="0 0 1000 1600" preserveAspectRatio="none" aria-hidden="true">
-          <path class="bt-energy-line line-a" d="M780 120 C850 230 720 310 810 430 C920 590 760 700 850 850 C930 990 780 1150 900 1320" />
-          <path class="bt-energy-line line-b" d="M410 260 C360 390 470 510 390 650 C300 790 440 910 350 1040 C270 1180 370 1320 290 1500" />
-          <path class="bt-energy-line line-c" d="M520 560 C600 690 430 820 560 960 C690 1100 500 1240 610 1450" />
-        </svg>
-
-        <div class="bt-layer bt-layer-tower" data-depth="0.08">
-          <img src="./assets/tower/tower.webp" alt="" decoding="async">
-        </div>
-
-        <div class="bt-layer bt-layer-fog bt-layer-fog-back" data-depth="0.04">
-          <img src="./assets/tower/fog-back.webp" alt="" decoding="async">
-        </div>
-
-        <button class="bt-hotspot hotspot-melody is-primary" type="button" data-door="melody" data-depth="0.16">
-          <span class="bt-portal"></span>
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-melody.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Зал Мелодий</b>
-            <small>Угадай песню</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-words" type="button" data-door="words" data-depth="0.14">
-          <span class="bt-portal"></span>
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-words.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Кузница Слов</b>
-            <small>Собери строки</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-oracle" type="button" data-door="oracle" data-depth="0.18">
-          <span class="bt-portal"></span>
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-oracle.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Оракул Текстов</b>
-            <small>Викторины</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-heart is-heart" type="button" data-door="heart" data-depth="0.2">
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-heart.webp" alt="" decoding="async">
-          <span class="bt-heart-pulse"></span>
-          <span class="bt-hotspot-text">
-            <b>Сердце Витрины</b>
-            <small>Собери сердце из осколков</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-arena" type="button" data-door="arena" data-depth="0.17">
-          <span class="bt-portal"></span>
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-arena.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Арена Турниров</b>
-            <small>Соревнования</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-fame" type="button" data-door="fame" data-depth="0.12">
-          <span class="bt-portal"></span>
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-crown.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Зал Славы</b>
-            <small>Рейтинг игроков</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-daily" type="button" data-door="daily" data-depth="0.18">
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-daily.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Ежедневный вызов</b>
-            <small>Игра дня</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-chest" type="button" data-door="chest" data-depth="0.18">
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-chest.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Сундук Осколков</b>
-            <small>Награды</small>
-          </span>
-        </button>
-
-        <button class="bt-hotspot hotspot-collection" type="button" data-door="collection" data-depth="0.14">
-          <img class="bt-hotspot-icon" src="./assets/tower/icon-cards.webp" alt="" decoding="async">
-          <span class="bt-hotspot-text">
-            <b>Коллекция</b>
-            <small>Карточки песен</small>
-          </span>
-        </button>
-
-        <div class="bt-layer bt-layer-fog bt-layer-fog-front" data-depth="0.22">
-          <img src="./assets/tower/fog-front.webp" alt="" decoding="async">
-        </div>
+        <button class="bt-nav-hotspot nav-games" type="button" data-door="nav:games" aria-label="Игры"></button>
+        <button class="bt-nav-hotspot nav-tournaments" type="button" data-door="nav:tournaments" aria-label="Турниры"></button>
+        <button class="bt-nav-hotspot nav-rating" type="button" data-door="nav:rating" aria-label="Рейтинг"></button>
+        <button class="bt-nav-hotspot nav-profile" type="button" data-door="nav:profile" aria-label="Профиль"></button>
       </div>
-
-      <header class="bt-topbar">
-        <div class="bt-title">
-          <h1>Башня Витрины</h1>
-          <p>Музыкальный игровой центр</p>
-        </div>
-
-        <div class="bt-profile">
-          <div class="bt-shards">
-            <img src="./assets/tower/shard-red.webp" alt="">
-            <span id="shards-count">1250</span>
-            <small>осколков</small>
-          </div>
-
-          <div class="bt-avatar">
-            <img src="./assets/tower/avatar.webp" alt="">
-          </div>
-        </div>
-      </header>
-
-      <footer class="bt-nav" aria-label="Навигация Game Center">
-        <button class="bt-nav-item is-active" type="button" data-nav="games">
-          <span>🎮</span>
-          <b>Игры</b>
-        </button>
-        <button class="bt-nav-item" type="button" data-nav="tournaments">
-          <span>🏆</span>
-          <b>Турниры</b>
-        </button>
-        <button class="bt-nav-item" type="button" data-nav="rating">
-          <span>📊</span>
-          <b>Рейтинг</b>
-        </button>
-        <button class="bt-nav-item" type="button" data-nav="profile">
-          <span>👤</span>
-          <b>Профиль</b>
-        </button>
-      </footer>
 
       <div class="bt-bridge-pill" id="bridge-pill">bridge: wait</div>
       <div class="bt-toast" id="toast" hidden></div>
