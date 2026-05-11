@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-11 14:23:17 UTC
+Сгенерировано: 2026-05-11 14:25:28 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -477,172 +477,156 @@ try {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#07101c">
-  <title>Зал Витрины · Game Center</title>
-  <meta name="description" content="Хрустальная комната Game Center для Витрина Разбита">
+  <meta name="theme-color" content="#07091a">
+  <title>Башня Витрины · Game Center</title>
+  <meta name="description" content="Музыкальный игровой центр Витрина Разбита">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main class="gc-app" id="app">
-    <header class="gc-top">
-      <div class="gc-titlebox">
-        <div class="gc-kicker">Витрина Разбита · Game Center</div>
-        <h1>Зал Витрины</h1>
-      </div>
-      <div class="gc-pill" id="bridge-pill">bridge: wait</div>
-    </header>
+  <main class="bt-app" id="app">
+    <section class="bt-scene" id="scene" aria-label="Башня Витрины">
+      <canvas class="bt-particles" id="particles" aria-hidden="true"></canvas>
 
-    <section class="gc-room" id="room" aria-label="Хрустальная комната Game Center">
-      <div class="gc-aurora"></div>
-      <div class="gc-stars"></div>
-      <div class="gc-dome"></div>
-      <div class="gc-dome-ribs"></div>
-
-      <div class="gc-panorama" id="panorama">
-        <article class="gc-sector sector-games">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Game Hub</div>
-            <button class="gc-door" type="button" data-door="games">
-              <span class="gc-door-icon">🎮</span>
-              <span>Игровые<br>Витрины</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine left">
-            <span>🧙</span>
-            <b>Квесты</b>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-trophies">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Трофеи Fame</div>
-            <button class="gc-door" type="button" data-door="trophies">
-              <span class="gc-door-icon">🏆</span>
-              <span>Зал<br>Трофеев</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine right">
-            <span>💎</span>
-            <b>Редкие</b>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-achievements">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Не всё равно</div>
-            <button class="gc-door" type="button" data-door="achievements">
-              <span class="gc-door-icon">✨</span>
-              <span>Достижения</span>
-            </button>
-          </div>
-          <div class="gc-achievement-map">
-            <i></i><i></i><i></i><i></i><i></i>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-tournaments">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Турниры</div>
-            <button class="gc-door" type="button" data-door="tournaments">
-              <span class="gc-door-icon">⚔️</span>
-              <span>Арены<br>Сердец</span>
-            </button>
-          </div>
-          <div class="gc-score-ghost">+180</div>
-        </article>
-
-        <article class="gc-sector sector-shop">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Магазин</div>
-            <button class="gc-door" type="button" data-door="shop">
-              <span class="gc-door-icon">🛒</span>
-              <span>Призы<br>и Скины</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine left">
-            <span>🎁</span>
-            <b>Дропы</b>
-          </div>
-        </article>
-
-        <article class="gc-sector sector-profile">
-          <div class="gc-sector-window"></div>
-          <div class="gc-doorframe">
-            <div class="gc-sign">Личный кабинет</div>
-            <button class="gc-door" type="button" data-door="profile">
-              <span class="gc-door-icon">👤</span>
-              <span>Профиль<br>Игрока</span>
-            </button>
-          </div>
-          <div class="gc-mini-vitrine right">
-            <span>🔐</span>
-            <b>Аккаунт</b>
-          </div>
-        </article>
+      <div class="bt-layer bt-layer-bg" data-depth="0.05">
+        <img src="./assets/tower/bg.webp" alt="">
       </div>
 
-      <div class="gc-floor"></div>
-      <div class="gc-floor-runes">
-        <span>01. Личный кабинет</span>
-        <span>02. Манифест</span>
-        <span>03. Статистика</span>
+      <svg class="bt-energy" viewBox="0 0 1000 1600" preserveAspectRatio="none" aria-hidden="true">
+        <path class="bt-energy-line line-a" d="M780 120 C850 230 720 310 810 430 C920 590 760 700 850 850 C930 990 780 1150 900 1320" />
+        <path class="bt-energy-line line-b" d="M410 260 C360 390 470 510 390 650 C300 790 440 910 350 1040 C270 1180 370 1320 290 1500" />
+        <path class="bt-energy-line line-c" d="M520 560 C600 690 430 820 560 960 C690 1100 500 1240 610 1450" />
+      </svg>
+
+      <div class="bt-layer bt-layer-tower" data-depth="0.16">
+        <img src="./assets/tower/tower.webp" alt="">
       </div>
 
-      <section class="gc-heart-stage" aria-label="Центральное сердце Витрины">
-        <canvas class="gc-heart-canvas" id="heart-canvas" aria-hidden="true"></canvas>
+      <div class="bt-layer bt-layer-fog bt-layer-fog-back" data-depth="0.09">
+        <img src="./assets/tower/fog-back.webp" alt="">
+      </div>
 
-        <div class="gc-heart-aura"></div>
+      <button class="bt-hotspot hotspot-melody is-primary" type="button" data-door="melody" data-depth="0.28">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-melody.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Зал Мелодий</b>
+          <small>Угадай песню</small>
+        </span>
+      </button>
 
-        <div class="gc-heart-3d" aria-hidden="true">
-          <div class="gc-heart-shadow"></div>
-          <div class="gc-heart-gem">
-            <span class="facet f1"></span>
-            <span class="facet f2"></span>
-            <span class="facet f3"></span>
-            <span class="facet f4"></span>
-            <span class="facet f5"></span>
-            <span class="facet f6"></span>
-          </div>
-          <div class="gc-heart-cut cut-a"></div>
-          <div class="gc-heart-cut cut-b"></div>
-          <div class="gc-heart-cut cut-c"></div>
-        </div>
+      <button class="bt-hotspot hotspot-words" type="button" data-door="words" data-depth="0.24">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-words.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Кузница Слов</b>
+          <small>Собери строки</small>
+        </span>
+      </button>
 
-        <div class="gc-heart-label">
+      <button class="bt-hotspot hotspot-oracle" type="button" data-door="oracle" data-depth="0.32">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-oracle.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Оракул Текстов</b>
+          <small>Викторины</small>
+        </span>
+      </button>
+
+      <button class="bt-hotspot hotspot-heart is-heart" type="button" data-door="heart" data-depth="0.36">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-heart.webp" alt="">
+        <span class="bt-heart-pulse"></span>
+        <span class="bt-hotspot-text">
           <b>Сердце Витрины</b>
-          <span id="user-line">ожидаем профиль...</span>
-        </div>
-      </section>
+          <small>Собери сердце из осколков</small>
+        </span>
+      </button>
 
-      <nav class="gc-hud" aria-label="Статистика Game Center">
-        <div class="gc-card">
-          <span>Уровень</span>
-          <b id="level">—</b>
-        </div>
-        <div class="gc-card">
-          <span>XP</span>
-          <b id="xp">—</b>
-        </div>
-        <div class="gc-card">
-          <span>Ачивки</span>
-          <b id="ach">—</b>
-        </div>
-        <div class="gc-card gc-card-wide">
-          <span>Сейчас играет</span>
-          <b id="track">—</b>
-        </div>
-      </nav>
+      <button class="bt-hotspot hotspot-arena" type="button" data-door="arena" data-depth="0.3">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-arena.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Арена Турниров</b>
+          <small>Соревнования</small>
+        </span>
+      </button>
 
-      <div class="gc-yaw" id="yaw-line">yaw 0° · потяни комнату</div>
-    </section>
+      <button class="bt-hotspot hotspot-fame" type="button" data-door="fame" data-depth="0.2">
+        <span class="bt-portal"></span>
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-crown.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Зал Славы</b>
+          <small>Рейтинг игроков</small>
+        </span>
+      </button>
 
-    <section class="gc-log" id="log" aria-label="Лог Game Center">
-      <div>Система готовится...</div>
+      <button class="bt-hotspot hotspot-daily" type="button" data-door="daily" data-depth="0.34">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-daily.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Ежедневный вызов</b>
+          <small>Игра дня</small>
+        </span>
+      </button>
+
+      <button class="bt-hotspot hotspot-chest" type="button" data-door="chest" data-depth="0.34">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-chest.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Сундук Осколков</b>
+          <small>Награды</small>
+        </span>
+      </button>
+
+      <button class="bt-hotspot hotspot-collection" type="button" data-door="collection" data-depth="0.25">
+        <img class="bt-hotspot-icon" src="./assets/tower/icon-cards.webp" alt="">
+        <span class="bt-hotspot-text">
+          <b>Коллекция</b>
+          <small>Карточки песен</small>
+        </span>
+      </button>
+
+      <div class="bt-layer bt-layer-fog bt-layer-fog-front" data-depth="0.42">
+        <img src="./assets/tower/fog-front.webp" alt="">
+      </div>
+
+      <header class="bt-topbar">
+        <div class="bt-title">
+          <h1>Башня Витрины</h1>
+          <p>Музыкальный игровой центр</p>
+        </div>
+
+        <div class="bt-profile">
+          <div class="bt-shards">
+            <img src="./assets/tower/shard-red.webp" alt="">
+            <span id="shards-count">1250</span>
+            <small>осколков</small>
+          </div>
+
+          <div class="bt-avatar">
+            <img src="./assets/tower/avatar.webp" alt="">
+          </div>
+        </div>
+      </header>
+
+      <footer class="bt-nav" aria-label="Навигация Game Center">
+        <button class="bt-nav-item is-active" type="button" data-nav="games">
+          <span>🎮</span>
+          <b>Игры</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-nav="tournaments">
+          <span>🏆</span>
+          <b>Турниры</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-nav="rating">
+          <span>📊</span>
+          <b>Рейтинг</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-nav="profile">
+          <span>👤</span>
+          <b>Профиль</b>
+        </button>
+      </footer>
+
+      <div class="bt-bridge-pill" id="bridge-pill">bridge: wait</div>
+      <div class="bt-toast" id="toast" hidden></div>
     </section>
   </main>
 
@@ -664,10 +648,10 @@ Important:
 
 //=================================================
 // FILE: /src/app.js
-// UID.001_(Playback safety invariant)_(game-app не управляет музыкой)_(нет audio/webAudio/playback commands)
-// UID.006_(Lazy isolated micro-app)_(работает только внутри iframe или standalone preview)_(основной app загружает его по клику)
+// UID.001_(Playback safety invariant)_(game-app не управляет музыкой)_(нет audio/WebAudio/playback commands)
+// UID.006_(Lazy isolated micro-app)_(работает внутри iframe или standalone preview)_(основной app загружает его по клику)
 // UID.082_(Local truth vs external telemetry split)_(получаем только safe snapshot)_(не читаем localStorage/IndexedDB/token)
-// UID.094_(No-paralysis rule)_(ошибка Game Center не ломает основное приложение)_(только postMessage + CSS/Canvas panorama)
+// UID.094_(No-paralysis rule)_(ошибка Game Center не ломает основное приложение)_(только postMessage + CSS/Canvas parallax)
 
 const $ = id => document.getElementById(id);
 const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
@@ -675,21 +659,22 @@ const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.
 const state = {
   bridgeId: '',
   snapshot: null,
-  yaw: 0,
-  dragging: false,
+  activeDoor: '',
+  pointerDown: false,
+  targetX: 0,
+  targetY: 0,
+  lookX: 0,
+  lookY: 0,
   startX: 0,
-  startYaw: 0,
-  lastDoor: ''
+  startY: 0,
+  dragX: 0,
+  dragY: 0,
+  targetDragX: 0,
+  targetDragY: 0,
+  raf: 0
 };
 
-const log = msg => {
-  const box = $('log');
-  if (!box) return;
-  const row = document.createElement('div');
-  row.textContent = `[${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}] ${msg}`;
-  box.prepend(row);
-  while (box.children.length > 20) box.lastElementChild?.remove();
-};
+const scene = $('scene');
 
 const send = (type, payload = {}) => {
   if (!state.bridgeId || !window.parent || window.parent === window) return false;
@@ -699,6 +684,19 @@ const send = (type, payload = {}) => {
   } catch {
     return false;
   }
+};
+
+const showToast = text => {
+  const toast = $('toast');
+  if (!toast) return;
+
+  toast.textContent = text;
+  toast.hidden = false;
+
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => {
+    toast.hidden = true;
+  }, 1700);
 };
 
 const fmtNum = value => {
@@ -711,65 +709,15 @@ const fmtNum = value => {
 
 const applySnapshot = snapshot => {
   state.snapshot = snapshot || state.snapshot || {};
-  const p = state.snapshot?.progress || {};
-  const u = state.snapshot?.user || {};
-  const pl = state.snapshot?.player || {};
 
-  $('level').textContent = p.level ?? '—';
-  $('xp').textContent = fmtNum(p.xp ?? 0);
-  $('ach').textContent = `${p.achievementsUnlocked ?? 0}/${p.achievementsTotal ?? 0}`;
-  $('track').textContent = pl.title || (pl.playing ? 'играет' : '—');
+  const progress = state.snapshot?.progress || {};
+  const user = state.snapshot?.user || {};
 
-  const name = u.displayName || 'гость';
-  const level = p.level || 1;
-  $('user-line').textContent = `${name} · ${level} ур.`;
-};
+  const shardText = $('shards-count');
+  if (shardText) shardText.textContent = fmtNum(progress.xp || 1250);
 
-const updateYaw = value => {
-  state.yaw = ((value % 360) + 360) % 360;
-  const x = -state.yaw / 360 * 66.666;
-  const panorama = $('panorama');
-  if (panorama) panorama.style.transform = `translate3d(${x}%,0,0)`;
-
-  const sector = Math.round(state.yaw / 60) % 6;
-  const labels = ['Game Hub', 'Трофеи', 'Достижения', 'Турниры', 'Магазин', 'Профиль'];
-  $('yaw-line').textContent = `${Math.round(state.yaw)}° · ${labels[sector]} · потяни комнату`;
-};
-
-const bindRoom = () => {
-  const room = $('room');
-  if (!room) return;
-
-  room.addEventListener('pointerdown', e => {
-    if (e.target?.closest?.('button')) return;
-    state.dragging = true;
-    state.startX = e.clientX;
-    state.startYaw = state.yaw;
-    room.setPointerCapture?.(e.pointerId);
-  });
-
-  room.addEventListener('pointermove', e => {
-    if (!state.dragging) return;
-    updateYaw(state.startYaw - (e.clientX - state.startX) * 0.42);
-  });
-
-  const end = e => {
-    state.dragging = false;
-    try { room.releasePointerCapture?.(e.pointerId); } catch {}
-  };
-
-  room.addEventListener('pointerup', end);
-  room.addEventListener('pointercancel', end);
-
-  document.querySelectorAll('[data-door]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const door = btn.dataset.door || 'unknown';
-      state.lastDoor = door;
-      log(`Открыта дверь: ${door}`);
-      send('GC_DOOR_CLICKED', { door, yaw: Math.round(state.yaw), at: Date.now() });
-    });
-  });
+  const avatar = document.querySelector('.bt-avatar img');
+  if (avatar && user.avatar) avatar.src = user.avatar;
 };
 
 const bindBridge = () => {
@@ -781,7 +729,6 @@ const bindBridge = () => {
       state.bridgeId = d.bridgeId || d.payload?.bridgeId || '';
       $('bridge-pill').textContent = state.bridgeId ? 'bridge: connected' : 'bridge: no id';
       applySnapshot(d.payload?.snapshot);
-      log('GC_INIT принят от host');
       send('GC_READY', { at: Date.now(), userAgent: navigator.userAgent.slice(0, 80) });
       send('GC_REQUEST_SNAPSHOT');
       return;
@@ -791,7 +738,6 @@ const bindBridge = () => {
 
     if (d.type === 'GC_SNAPSHOT' || d.type === 'GC_HOST_STATE') {
       applySnapshot(d.payload);
-      log(d.type === 'GC_SNAPSHOT' ? 'snapshot обновлён' : 'host state обновлён');
     }
   });
 
@@ -799,171 +745,203 @@ const bindBridge = () => {
     $('bridge-pill').textContent = 'standalone';
     applySnapshot({
       user: { displayName: 'Standalone' },
-      progress: { level: 1, xp: 0, achievementsUnlocked: 0, achievementsTotal: 0 },
+      progress: { level: 1, xp: 1250, achievementsUnlocked: 0, achievementsTotal: 0 },
       player: { title: '' }
     });
-    log('Запущено standalone, без parent bridge');
-  } else {
-    log('Ожидаем GC_INIT от основного приложения...');
   }
 };
 
-const createHeartEngine = canvas => {
+const bindHotspots = () => {
+  document.querySelectorAll('.bt-hotspot').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+
+      const door = btn.dataset.door || 'unknown';
+      const title = btn.querySelector('b')?.textContent || door;
+
+      state.activeDoor = door;
+
+      document.querySelectorAll('.bt-hotspot').forEach(x => {
+        x.classList.toggle('is-active', x === btn);
+      });
+
+      showToast(`${title}: скоро откроется`);
+      send('GC_DOOR_CLICKED', { door, at: Date.now() });
+
+      spawnBurst(btn);
+    });
+  });
+
+  document.querySelectorAll('.bt-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.bt-nav-item').forEach(x => {
+        x.classList.toggle('is-active', x === btn);
+      });
+
+      const nav = btn.dataset.nav || 'unknown';
+      showToast(`Раздел: ${btn.textContent.trim()}`);
+      send('GC_DOOR_CLICKED', { door: `nav:${nav}`, at: Date.now() });
+    });
+  });
+};
+
+const getPointerLook = e => {
+  const r = scene.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+
+  return {
+    x: Math.max(-1, Math.min(1, (e.clientX - cx) / (r.width / 2))),
+    y: Math.max(-1, Math.min(1, (e.clientY - cy) / (r.height / 2)))
+  };
+};
+
+const bindParallaxInput = () => {
+  if (!scene) return;
+
+  scene.addEventListener('pointerdown', e => {
+    if (e.target?.closest?.('button')) return;
+
+    state.pointerDown = true;
+    state.startX = e.clientX;
+    state.startY = e.clientY;
+    scene.setPointerCapture?.(e.pointerId);
+  });
+
+  scene.addEventListener('pointermove', e => {
+    const look = getPointerLook(e);
+    state.targetX = look.x;
+    state.targetY = look.y;
+
+    if (state.pointerDown) {
+      state.targetDragX += (e.movementX || 0) * 0.18;
+      state.targetDragY += (e.movementY || 0) * 0.08;
+      state.targetDragX = Math.max(-90, Math.min(90, state.targetDragX));
+      state.targetDragY = Math.max(-40, Math.min(40, state.targetDragY));
+    }
+  });
+
+  const end = e => {
+    state.pointerDown = false;
+    try { scene.releasePointerCapture?.(e.pointerId); } catch {}
+  };
+
+  scene.addEventListener('pointerup', end);
+  scene.addEventListener('pointercancel', end);
+
+  window.addEventListener('deviceorientation', e => {
+    if (!Number.isFinite(e.gamma) || !Number.isFinite(e.beta)) return;
+    state.targetX = Math.max(-1, Math.min(1, e.gamma / 28));
+    state.targetY = Math.max(-1, Math.min(1, (e.beta - 45) / 42));
+  }, { passive: true });
+};
+
+const updateParallax = () => {
+  state.lookX += (state.targetX - state.lookX) * 0.075;
+  state.lookY += (state.targetY - state.lookY) * 0.075;
+  state.dragX += (state.targetDragX - state.dragX) * 0.08;
+  state.dragY += (state.targetDragY - state.dragY) * 0.08;
+
+  document.querySelectorAll('[data-depth]').forEach(el => {
+    const depth = Number(el.dataset.depth || 0);
+    const x = state.dragX * depth + state.lookX * depth * 46;
+    const y = state.dragY * depth + state.lookY * depth * 30;
+
+    if (el.classList.contains('bt-hotspot')) {
+      el.style.translate = `${x}px ${y}px`;
+    } else {
+      el.style.transform = `translate3d(${x}px,${y}px,0)`;
+    }
+  });
+};
+
+const createParticleEngine = canvas => {
   if (!canvas || prefersReduced) {
-    return { start() {}, stop() {}, resize() {} };
+    return { start() {}, stop() {}, burst() {}, resize() {} };
   }
 
   const ctx = canvas.getContext('2d', { alpha: true });
   const particles = [];
-  let raf = 0;
-  let running = false;
   let width = 0;
   let height = 0;
   let dpr = 1;
-  let startedAt = performance.now();
+  let raf = 0;
+  let running = false;
 
   const rand = (min, max) => min + Math.random() * (max - min);
 
-  const heartPoint = t => {
-    const x = 16 * Math.pow(Math.sin(t), 3);
-    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-    return { x, y };
-  };
-
   const resize = () => {
-    const rect = canvas.getBoundingClientRect();
+    const r = canvas.getBoundingClientRect();
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    width = Math.max(1, Math.floor(rect.width * dpr));
-    height = Math.max(1, Math.floor(rect.height * dpr));
+    width = Math.max(1, Math.floor(r.width * dpr));
+    height = Math.max(1, Math.floor(r.height * dpr));
     canvas.width = width;
     canvas.height = height;
   };
 
-  const resetParticle = p => {
-    const t = rand(0, Math.PI * 2);
-    const pt = heartPoint(t);
-    const scale = Math.min(width, height) / 38;
-    const cx = width / 2;
-    const cy = height * 0.49;
-
-    p.t = t;
-    p.speed = rand(0.004, 0.011);
-    p.x = cx + pt.x * scale + rand(-40, 40) * dpr;
-    p.y = cy + pt.y * scale + rand(-40, 40) * dpr;
-    p.vx = 0;
-    p.vy = 0;
-    p.size = rand(0.8, 2.1) * dpr;
-    p.force = rand(0.035, 0.075);
-    p.hue = rand(348, 365);
-    p.alpha = rand(0.28, 0.82);
-    p.trace = Array.from({ length: 9 }, () => ({ x: p.x, y: p.y }));
+  const addParticle = (x, y, burst = false) => {
+    particles.push({
+      x,
+      y,
+      vx: rand(-0.35, 0.35) * dpr * (burst ? 6 : 1),
+      vy: rand(-0.55, -0.05) * dpr * (burst ? 6 : 1),
+      life: burst ? rand(28, 62) : rand(90, 220),
+      maxLife: burst ? 62 : 220,
+      size: rand(1, burst ? 4 : 2.6) * dpr,
+      hue: Math.random() > 0.35 ? rand(186, 198) : rand(342, 354)
+    });
   };
 
-  const init = () => {
-    resize();
+  const seed = () => {
     particles.length = 0;
-    const base = Math.min(width, height);
-    const count = Math.max(70, Math.min(190, Math.floor(base / 2.25)));
-
-    for (let i = 0; i < count; i++) {
-      const p = {};
-      resetParticle(p);
-      particles.push(p);
+    for (let i = 0; i < 95; i++) {
+      addParticle(rand(0, width), rand(height * .12, height * .95));
     }
   };
 
-  const drawCoreGlow = time => {
-    const pulse = 1 + Math.sin(time * 0.004) * 0.06;
-    const cx = width / 2;
-    const cy = height * 0.49;
-    const r = Math.min(width, height) * 0.32 * pulse;
+  const burst = (clientX, clientY) => {
+    const r = canvas.getBoundingClientRect();
+    const x = (clientX - r.left) * dpr;
+    const y = (clientY - r.top) * dpr;
 
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, 'rgba(255, 45, 85, .28)');
-    g.addColorStop(0.28, 'rgba(232, 1, 0, .16)');
-    g.addColorStop(0.58, 'rgba(121, 231, 255, .06)');
-    g.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
+    for (let i = 0; i < 38; i++) addParticle(x, y, true);
   };
 
-  const drawCrimsonThreads = time => {
-    const cx = width / 2;
-    const cy = height * 0.49;
-    const scale = Math.min(width, height) / 38;
-    const beat = 1 + Math.sin(time * 0.006) * 0.045 + Math.sin(time * 0.013) * 0.018;
+  const frame = () => {
+    if (!running || document.hidden) return;
 
+    updateParallax();
+
+    ctx.clearRect(0, 0, width, height);
     ctx.globalCompositeOperation = 'lighter';
 
-    for (const p of particles) {
-      p.t += p.speed;
-      if (p.t > Math.PI * 2) p.t -= Math.PI * 2;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
 
-      const pt = heartPoint(p.t);
-      const tx = cx + pt.x * scale * beat;
-      const ty = cy + pt.y * scale * beat;
-
-      p.vx += (tx - p.x) * p.force;
-      p.vy += (ty - p.y) * p.force;
-      p.vx *= 0.78;
-      p.vy *= 0.78;
+      p.life -= 1;
       p.x += p.vx;
       p.y += p.vy;
+      p.vy += 0.006 * dpr;
 
-      p.trace.unshift({ x: p.x, y: p.y });
-      p.trace.length = 9;
+      const alpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = `hsla(${p.hue}, 100%, 62%, ${alpha * .8})`;
+      ctx.shadowBlur = 12 * dpr;
+      ctx.shadowColor = `hsla(${p.hue}, 100%, 60%, .9)`;
 
-      ctx.beginPath();
-      for (let i = 0; i < p.trace.length - 1; i++) {
-        const a = p.trace[i];
-        const b = p.trace[i + 1];
-        ctx.strokeStyle = `hsla(${p.hue}, 100%, ${58 - i * 2}%, ${p.alpha * (1 - i / p.trace.length)})`;
-        ctx.lineWidth = Math.max(0.4 * dpr, p.size * (1 - i / p.trace.length));
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-      }
-      ctx.stroke();
-
-      ctx.fillStyle = `hsla(${p.hue}, 100%, 68%, ${p.alpha})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
+
+      if (p.life <= 0 || p.y < -20 || p.y > height + 30) {
+        particles.splice(i, 1);
+      }
     }
-  };
 
-  const drawShards = time => {
-    const cx = width / 2;
-    const cy = height * 0.49;
-    const amount = 18;
+    ctx.shadowBlur = 0;
 
-    ctx.globalCompositeOperation = 'screen';
-    for (let i = 0; i < amount; i++) {
-      const a = (i / amount) * Math.PI * 2 + Math.sin(time * 0.0008 + i) * 0.08;
-      const r1 = Math.min(width, height) * (0.18 + (i % 5) * 0.018);
-      const r2 = r1 + Math.min(width, height) * 0.18;
-      const x1 = cx + Math.cos(a) * r1;
-      const y1 = cy + Math.sin(a) * r1 * 0.72;
-      const x2 = cx + Math.cos(a) * r2;
-      const y2 = cy + Math.sin(a) * r2 * 0.72;
-
-      ctx.strokeStyle = i % 3 === 0 ? 'rgba(121,231,255,.14)' : 'rgba(255,45,85,.12)';
-      ctx.lineWidth = 0.8 * dpr;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
+    while (particles.length < 95) {
+      addParticle(rand(0, width), height + rand(0, 80) * dpr);
     }
-  };
-
-  const frame = time => {
-    if (!running || document.hidden) return;
-
-    ctx.clearRect(0, 0, width, height);
-    drawCoreGlow(time - startedAt);
-    drawShards(time - startedAt);
-    drawCrimsonThreads(time - startedAt);
 
     raf = requestAnimationFrame(frame);
   };
@@ -971,7 +949,6 @@ const createHeartEngine = canvas => {
   const start = () => {
     if (running || document.hidden) return;
     running = true;
-    startedAt = performance.now();
     raf = requestAnimationFrame(frame);
   };
 
@@ -981,36 +958,40 @@ const createHeartEngine = canvas => {
     raf = 0;
   };
 
-  init();
+  resize();
+  seed();
 
-  return { start, stop, resize: init };
+  return { start, stop, burst, resize: () => { resize(); seed(); } };
+};
+
+let particleEngine = null;
+
+const spawnBurst = el => {
+  if (!particleEngine || !el) return;
+  const r = el.getBoundingClientRect();
+  particleEngine.burst(r.left + r.width / 2, r.top + r.height / 2);
 };
 
 const init = () => {
-  bindRoom();
   bindBridge();
+  bindHotspots();
+  bindParallaxInput();
 
-  const initialYaw = Math.floor(Math.random() * 360);
-  updateYaw(initialYaw);
-
-  const heartEngine = createHeartEngine($('heart-canvas'));
-  heartEngine.start();
+  particleEngine = createParticleEngine($('particles'));
+  particleEngine.start();
 
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => heartEngine.resize(), 120);
+    resizeTimer = setTimeout(() => particleEngine.resize(), 140);
   });
 
   document.addEventListener('visibilitychange', () => {
-    document.body.toggleAttribute('data-hidden', document.hidden);
     if (document.hidden) {
-      heartEngine.stop();
-      log('document hidden: Canvas-анимация остановлена');
+      particleEngine.stop();
     } else {
-      heartEngine.resize();
-      heartEngine.start();
-      log('document visible: Canvas-анимация запущена');
+      particleEngine.resize();
+      particleEngine.start();
     }
   });
 };
@@ -1020,160 +1001,665 @@ init();
 //=================================================
 // FILE: /styles.css
 :root{
-  --bg:#060b14;
-  --ink:#eaf2ff;
-  --muted:#8da8cc;
-  --blue:#4daaff;
-  --cyan:#79e7ff;
-  --deep:#07101c;
-  --glass:#142235;
-  --red:#e80100;
-  --red2:#ff2d55;
-  --gold:#ffd66b;
-  --violet:#9a6bff;
+  --bt-bg:#07091a;
+  --bt-white:#ffffff;
+  --bt-muted:#a7abc9;
+  --bt-red:#ff3159;
+  --bt-red2:#ff0f45;
+  --bt-cyan:#25e8ff;
+  --bt-blue:#167cff;
+  --bt-panel:rgba(10,12,36,.74);
+  --bt-border:rgba(123,130,210,.36);
 }
+
 *{box-sizing:border-box}
-html,body{min-height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
-body{padding:env(safe-area-inset-top) 8px env(safe-area-inset-bottom)}
-button{font:inherit;-webkit-tap-highlight-color:transparent}
-.gc-app{width:100%;max-width:430px;margin:0 auto;padding:10px 0 16px}
-.gc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 8px}
-.gc-titlebox{min-width:0}
-.gc-kicker{font-size:9px;font-weight:950;text-transform:uppercase;letter-spacing:1px;color:var(--cyan);opacity:.92;text-shadow:0 0 12px rgba(121,231,255,.3)}
-h1{margin:3px 0 0;font-size:25px;line-height:1.03;letter-spacing:.2px;text-shadow:0 2px 0 #000,0 0 20px rgba(77,170,255,.24)}
-.gc-pill{font-size:10px;font-weight:950;color:#d8ebff;background:linear-gradient(180deg,rgba(77,170,255,.18),rgba(10,18,31,.76));border:1px solid rgba(121,231,255,.34);border-radius:999px;padding:7px 10px;white-space:nowrap;box-shadow:0 0 22px rgba(77,170,255,.1),inset 0 0 18px rgba(77,170,255,.08)}
 
-.gc-room{position:relative;height:min(680px,calc(100vh - 92px));min-height:570px;border-radius:26px;overflow:hidden;background:radial-gradient(circle at 50% 18%,rgba(121,231,255,.18),transparent 30%),linear-gradient(180deg,#0a1425 0%,#101b2b 46%,#05080d 100%);border:1px solid rgba(121,231,255,.24);box-shadow:0 24px 70px rgba(0,0,0,.62),inset 0 0 90px rgba(77,170,255,.08);touch-action:none;user-select:none;isolation:isolate}
-.gc-room::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(232,1,0,.08),transparent 22%,rgba(121,231,255,.08) 50%,transparent 78%,rgba(232,1,0,.08)),radial-gradient(circle at 8% 88%,rgba(232,1,0,.16),transparent 28%),radial-gradient(circle at 92% 72%,rgba(77,170,255,.18),transparent 30%);pointer-events:none;z-index:1}
-.gc-room::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 34px,rgba(255,255,255,.035) 35px,transparent 37px),repeating-linear-gradient(65deg,transparent 0 46px,rgba(121,231,255,.035) 47px,transparent 49px);mix-blend-mode:screen;opacity:.55;pointer-events:none;z-index:8}
-
-.gc-aurora{position:absolute;inset:-20% -40%;background:radial-gradient(ellipse at 20% 30%,rgba(77,170,255,.22),transparent 30%),radial-gradient(ellipse at 82% 20%,rgba(255,45,85,.16),transparent 34%),radial-gradient(ellipse at 48% 10%,rgba(154,107,255,.14),transparent 36%);filter:blur(10px);animation:auroraDrift 15s ease-in-out infinite alternate;z-index:0}
-.gc-stars{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.8) 0 1px,transparent 1.5px),radial-gradient(circle,rgba(121,231,255,.55) 0 1px,transparent 1.5px);background-size:74px 74px,112px 112px;background-position:11px 7px,44px 29px;opacity:.22;z-index:0}
-.gc-dome{position:absolute;left:-18%;right:-18%;top:-15%;height:45%;border-radius:0 0 50% 50%;background:radial-gradient(ellipse at 50% 100%,rgba(121,231,255,.16),transparent 56%),repeating-conic-gradient(from 8deg at 50% 115%,rgba(121,231,255,.22) 0 1deg,transparent 1deg 14deg);border-bottom:2px solid rgba(121,231,255,.22);filter:drop-shadow(0 8px 20px rgba(77,170,255,.15));z-index:2;pointer-events:none}
-.gc-dome-ribs{position:absolute;left:-20%;right:-20%;top:0;height:37%;background:repeating-linear-gradient(22deg,transparent 0 38px,rgba(121,231,255,.18) 39px,rgba(121,231,255,.18) 41px,transparent 42px 82px),repeating-linear-gradient(-22deg,transparent 0 42px,rgba(10,18,32,.85) 43px,rgba(10,18,32,.85) 47px,transparent 48px 90px);opacity:.72;z-index:3;pointer-events:none;mask-image:linear-gradient(180deg,#000 0%,#000 72%,transparent 100%)}
-
-.gc-panorama{position:absolute;left:0;top:20px;width:300%;height:74%;display:flex;will-change:transform;transform:translate3d(0,0,0);transition:transform .05s linear;z-index:4}
-.gc-sector{position:relative;flex:0 0 16.666%;height:100%;padding:120px 14px 0;overflow:hidden}
-.gc-sector::before{content:"";position:absolute;left:0;right:0;bottom:0;height:76%;background:linear-gradient(180deg,rgba(31,50,75,.72),rgba(7,12,20,.96));border-left:1px solid rgba(255,255,255,.05);border-right:1px solid rgba(0,0,0,.5);box-shadow:inset 0 0 38px rgba(77,170,255,.08)}
-.gc-sector::after{content:"";position:absolute;left:7%;right:7%;top:32%;height:46%;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 15px,rgba(255,255,255,.025) 16px 17px),repeating-linear-gradient(90deg,transparent 0 48px,rgba(121,231,255,.08) 49px,transparent 51px);opacity:.82;border-radius:18px;filter:drop-shadow(0 8px 20px rgba(0,0,0,.35))}
-.gc-sector-window{position:absolute;left:9%;right:9%;top:15px;height:120px;border-radius:38px 38px 16px 16px;background:radial-gradient(circle at 50% 20%,rgba(255,255,255,.16),transparent 20%),linear-gradient(180deg,rgba(121,231,255,.18),rgba(18,44,70,.35));border:2px solid rgba(121,231,255,.22);box-shadow:inset 0 0 28px rgba(121,231,255,.1),0 10px 26px rgba(0,0,0,.3)}
-.gc-sector-window::before{content:"";position:absolute;inset:10px;border-radius:inherit;background:repeating-linear-gradient(55deg,transparent 0 32px,rgba(255,255,255,.22) 33px,transparent 35px),repeating-linear-gradient(-55deg,transparent 0 42px,rgba(121,231,255,.18) 43px,transparent 45px);opacity:.65}
-.gc-sector-window::after{content:"";position:absolute;left:50%;top:10%;width:2px;height:86%;background:rgba(121,231,255,.2);box-shadow:-52px 18px 0 rgba(121,231,255,.13),52px 18px 0 rgba(121,231,255,.13)}
-
-.gc-doorframe{position:absolute;left:50%;bottom:52px;width:128px;height:220px;transform:translateX(-50%);z-index:5}
-.gc-doorframe::before{content:"";position:absolute;left:-14px;right:-14px;bottom:-8px;height:235px;border-radius:64px 64px 8px 8px;background:linear-gradient(90deg,rgba(7,12,20,.96),rgba(41,67,96,.96) 24%,rgba(12,22,36,.96) 50%,rgba(41,67,96,.96) 76%,rgba(7,12,20,.96));border:1px solid rgba(121,231,255,.16);box-shadow:0 18px 34px rgba(0,0,0,.55),inset 0 0 28px rgba(121,231,255,.08)}
-.gc-doorframe::after{content:"";position:absolute;left:3px;right:3px;bottom:-3px;height:205px;border-radius:56px 56px 6px 6px;background:linear-gradient(180deg,rgba(121,231,255,.12),rgba(7,11,17,.9));border:1px solid rgba(255,255,255,.07)}
-.gc-sign{position:absolute;left:50%;top:-18px;min-width:154px;transform:translateX(-50%) rotate(-2deg);padding:8px 12px;border-radius:12px;background:linear-gradient(180deg,rgba(23,32,50,.96),rgba(8,13,23,.98));border:1px solid rgba(121,231,255,.22);box-shadow:0 8px 20px rgba(0,0,0,.45),inset 0 0 12px rgba(77,170,255,.08);font-size:15px;font-weight:950;text-align:center;color:#fff;text-shadow:0 2px 0 #000,0 0 10px rgba(121,231,255,.28);z-index:8}
-.gc-door{position:absolute;left:50%;bottom:4px;width:96px;height:166px;transform:translateX(-50%);border:0;border-radius:48px 48px 8px 8px;background:linear-gradient(180deg,rgba(58,92,128,.75),rgba(10,15,24,.98));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;z-index:7;box-shadow:inset 0 0 28px rgba(121,231,255,.12),inset 0 -14px 20px rgba(0,0,0,.45)}
-.gc-door::before{content:"";position:absolute;inset:8px;border-radius:42px 42px 6px 6px;border:1px solid rgba(121,231,255,.18);background:linear-gradient(115deg,transparent 0 35%,rgba(255,255,255,.12) 36% 38%,transparent 39% 100%)}
-.gc-door::after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
-.gc-door-icon{position:relative;font-size:26px;filter:drop-shadow(0 0 12px rgba(121,231,255,.42))}
-.gc-door span:last-child{position:relative;font-size:12px;line-height:1.08;font-weight:950;text-transform:uppercase;letter-spacing:.5px;text-shadow:0 2px 0 #000}
-.gc-door:active{transform:translateX(-50%) scale(.97)}
-.gc-door:hover{filter:brightness(1.08)}
-
-.sector-games .gc-sign{color:#dff4ff}
-.sector-trophies .gc-sign{color:#ffe8a4}
-.sector-achievements .gc-sign{color:#8deaff}
-.sector-tournaments .gc-sign{color:#ffd0dc}
-.sector-shop .gc-sign{color:#ffebad}
-.sector-profile .gc-sign{color:#d8ddff}
-
-.gc-mini-vitrine{position:absolute;bottom:82px;width:70px;height:126px;border-radius:18px;background:linear-gradient(180deg,rgba(121,231,255,.13),rgba(9,15,24,.88));border:1px solid rgba(121,231,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#dff4ff;box-shadow:inset 0 0 22px rgba(121,231,255,.08),0 12px 24px rgba(0,0,0,.38);z-index:5}
-.gc-mini-vitrine.left{left:14px}
-.gc-mini-vitrine.right{right:14px}
-.gc-mini-vitrine span{font-size:28px;filter:drop-shadow(0 0 10px rgba(121,231,255,.36))}
-.gc-mini-vitrine b{font-size:10px;text-transform:uppercase;letter-spacing:.7px}
-.gc-achievement-map{position:absolute;left:10px;right:10px;top:54px;height:92px;z-index:4;opacity:.7}
-.gc-achievement-map::before{content:"";position:absolute;left:8%;right:8%;top:50%;height:1px;background:linear-gradient(90deg,transparent,rgba(121,231,255,.55),transparent);box-shadow:0 -24px 0 rgba(121,231,255,.12),0 24px 0 rgba(121,231,255,.12)}
-.gc-achievement-map i{position:absolute;width:18px;height:18px;border-radius:7px;background:rgba(7,15,27,.9);border:1px solid rgba(121,231,255,.32);box-shadow:0 0 18px rgba(121,231,255,.2)}
-.gc-achievement-map i:nth-child(1){left:12%;top:12%}
-.gc-achievement-map i:nth-child(2){left:30%;top:58%}
-.gc-achievement-map i:nth-child(3){left:49%;top:26%}
-.gc-achievement-map i:nth-child(4){left:68%;top:54%}
-.gc-achievement-map i:nth-child(5){left:84%;top:18%}
-.gc-score-ghost{position:absolute;left:58%;top:46%;z-index:6;color:#ff8c66;font-size:24px;font-weight:950;text-shadow:0 0 16px rgba(255,80,80,.4);opacity:.72;animation:scoreFloat 2.8s ease-in-out infinite}
-
-.gc-floor{position:absolute;left:-35%;right:-35%;bottom:-22%;height:46%;background:radial-gradient(ellipse at 50% 0%,rgba(121,231,255,.26),transparent 58%),repeating-linear-gradient(90deg,rgba(255,255,255,.09) 0 2px,transparent 2px 58px),repeating-linear-gradient(28deg,transparent 0 34px,rgba(121,231,255,.12) 35px,transparent 38px),linear-gradient(180deg,rgba(54,88,122,.38),rgba(3,6,10,.95));transform:perspective(360px) rotateX(60deg);transform-origin:top center;border-top:2px solid rgba(121,231,255,.25);box-shadow:inset 0 20px 60px rgba(121,231,255,.12);z-index:5;pointer-events:none}
-.gc-floor::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,transparent 0 46px,rgba(255,255,255,.18) 47px,transparent 50px);opacity:.58;mix-blend-mode:screen}
-.gc-floor-runes{position:absolute;left:12px;right:12px;bottom:42px;display:flex;justify-content:space-between;gap:6px;z-index:10;opacity:.82;pointer-events:none}
-.gc-floor-runes span{font-size:10px;font-weight:950;color:rgba(234,242,255,.86);text-shadow:0 2px 0 #000,0 0 14px rgba(121,231,255,.36);transform:rotate(-8deg)}
-.gc-floor-runes span:nth-child(2){transform:rotate(4deg)}
-.gc-floor-runes span:nth-child(3){transform:rotate(8deg)}
-
-.gc-heart-stage{position:absolute;left:50%;top:48%;width:270px;height:270px;transform:translate(-50%,-50%);z-index:12;pointer-events:none}
-.gc-heart-canvas{position:absolute;inset:-28px;width:calc(100% + 56px);height:calc(100% + 56px);opacity:.96;filter:drop-shadow(0 0 20px rgba(255,45,85,.28))}
-.gc-heart-aura{position:absolute;left:50%;top:50%;width:218px;height:218px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,45,85,.18),rgba(255,45,85,.07) 34%,rgba(121,231,255,.08) 54%,transparent 72%);filter:blur(6px);animation:auraBeat 2.6s ease-in-out infinite}
-.gc-heart-3d{position:absolute;left:50%;top:47%;width:154px;height:142px;transform:translate(-50%,-50%);filter:drop-shadow(0 20px 24px rgba(0,0,0,.58));animation:heartFloat 3.4s ease-in-out infinite}
-.gc-heart-shadow{position:absolute;left:50%;top:108%;width:130px;height:30px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(255,45,85,.26),transparent 70%);filter:blur(6px);opacity:.85}
-.gc-heart-gem{position:absolute;left:50%;top:50%;width:110px;height:110px;transform:translate(-50%,-43%) rotate(-45deg);background:linear-gradient(135deg,#7a0008 0%,#ff1433 34%,#b90018 62%,#3e0007 100%);border-radius:18px 18px 16px 16px;box-shadow:inset -12px -12px 24px rgba(0,0,0,.38),inset 10px 8px 20px rgba(255,255,255,.18),0 0 30px rgba(255,45,85,.42)}
-.gc-heart-gem::before,.gc-heart-gem::after{content:"";position:absolute;width:110px;height:110px;border-radius:50%;background:inherit;box-shadow:inherit}
-.gc-heart-gem::before{left:0;top:-55px}
-.gc-heart-gem::after{left:55px;top:0}
-.facet{position:absolute;z-index:3;background:rgba(255,255,255,.14);clip-path:polygon(50% 0,100% 100%,0 100%);mix-blend-mode:screen}
-.f1{left:18px;top:12px;width:44px;height:56px;transform:rotate(25deg)}
-.f2{left:68px;top:20px;width:34px;height:58px;transform:rotate(-28deg)}
-.f3{left:26px;top:66px;width:58px;height:36px;transform:rotate(170deg);background:rgba(255,180,190,.18)}
-.f4{left:66px;top:70px;width:45px;height:32px;transform:rotate(120deg);background:rgba(255,255,255,.1)}
-.f5{left:6px;top:44px;width:38px;height:42px;transform:rotate(-74deg);background:rgba(0,0,0,.18)}
-.f6{left:84px;top:0;width:44px;height:42px;transform:rotate(42deg);background:rgba(255,255,255,.18)}
-.gc-heart-cut{position:absolute;background:rgba(0,0,0,.82);height:5px;border-radius:999px;z-index:5;box-shadow:0 0 4px rgba(0,0,0,.7)}
-.cut-a{left:42px;top:60px;width:86px;transform:rotate(28deg)}
-.cut-b{left:50px;top:93px;width:96px;transform:rotate(-38deg)}
-.cut-c{left:73px;top:35px;width:64px;transform:rotate(-6deg)}
-.gc-heart-label{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);min-width:190px;padding:9px 12px;border-radius:16px;text-align:center;background:linear-gradient(180deg,rgba(13,22,36,.72),rgba(4,7,12,.82));border:1px solid rgba(255,45,85,.22);box-shadow:0 10px 24px rgba(0,0,0,.35),inset 0 0 16px rgba(255,45,85,.08);backdrop-filter:blur(8px)}
-.gc-heart-label b{display:block;font-size:14px;font-weight:950;text-shadow:0 2px 0 #000}
-.gc-heart-label span{display:block;margin-top:2px;font-size:10px;color:#ffb3c2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-.gc-hud{position:absolute;left:10px;right:10px;bottom:74px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;z-index:18}
-.gc-card{min-width:0;min-height:48px;border-radius:14px;padding:8px 9px;background:linear-gradient(180deg,rgba(20,34,54,.74),rgba(6,10,18,.82));border:1px solid rgba(121,231,255,.18);box-shadow:0 10px 24px rgba(0,0,0,.35),inset 0 0 14px rgba(77,170,255,.06);backdrop-filter:blur(8px)}
-.gc-card-wide{grid-column:1 / -1}
-.gc-card span{display:block;font-size:9px;color:#8da8cc;text-transform:uppercase;letter-spacing:.8px;font-weight:950}
-.gc-card b{display:block;margin-top:3px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 0 #000}
-.gc-yaw{position:absolute;left:12px;right:12px;bottom:12px;z-index:20;text-align:center;font-size:10px;color:#9ab8dd;background:rgba(0,0,0,.34);border:1px solid rgba(121,231,255,.14);border-radius:999px;padding:7px 10px;backdrop-filter:blur(8px)}
-
-.gc-log{margin-top:10px;max-height:96px;overflow:auto;border-radius:16px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.07);padding:9px 11px;color:#9db7dd;font-size:11px;line-height:1.45}
-.gc-log div+div{margin-top:4px}
-
-@keyframes auroraDrift{
-  0%{transform:translate3d(-2%,0,0) scale(1)}
-  100%{transform:translate3d(2%,2%,0) scale(1.04)}
-}
-@keyframes auraBeat{
-  0%,100%{opacity:.62;transform:translate(-50%,-50%) scale(.94)}
-  45%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
-  58%{opacity:.82;transform:translate(-50%,-50%) scale(1.01)}
-}
-@keyframes heartFloat{
-  0%,100%{transform:translate(-50%,-50%) scale(1) rotate(-1deg)}
-  45%{transform:translate(-50%,-54%) scale(1.065) rotate(1deg)}
-  58%{transform:translate(-50%,-51%) scale(1.025) rotate(-.5deg)}
-}
-@keyframes scoreFloat{
-  0%,100%{transform:translateY(0);opacity:.45}
-  50%{transform:translateY(-16px);opacity:.95}
+html,
+body{
+  width:100%;
+  min-height:100%;
+  margin:0;
+  background:var(--bt-bg);
+  color:var(--bt-white);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  overflow:hidden;
 }
 
-@media(max-width:380px){
-  .gc-app{max-width:390px}
-  .gc-room{height:min(640px,calc(100vh - 88px));min-height:540px;border-radius:22px}
-  .gc-sector{padding-left:10px;padding-right:10px}
-  .gc-doorframe{width:116px;transform:translateX(-50%) scale(.92);transform-origin:bottom center}
-  .gc-heart-stage{width:240px;height:240px}
-  .gc-heart-3d{transform:translate(-50%,-50%) scale(.88)}
-  .gc-heart-label{bottom:8px}
-  .gc-hud{bottom:70px}
+button{
+  font:inherit;
+  color:inherit;
+  -webkit-tap-highlight-color:transparent;
 }
-@media(max-height:650px){
-  .gc-room{height:560px;min-height:560px}
-  .gc-heart-stage{top:45%;transform:translate(-50%,-50%) scale(.9)}
-  .gc-hud{bottom:62px}
-  .gc-floor-runes{display:none}
+
+.bt-app{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(25,125,255,.22),transparent 34%),
+    linear-gradient(180deg,#090b22 0%,#040511 100%);
 }
+
+.bt-scene{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  isolation:isolate;
+  background:#07091a;
+  touch-action:none;
+  user-select:none;
+}
+
+.bt-particles{
+  position:absolute;
+  inset:0;
+  z-index:32;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  mix-blend-mode:screen;
+}
+
+.bt-layer{
+  position:absolute;
+  inset:-6%;
+  z-index:1;
+  will-change:transform;
+  pointer-events:none;
+}
+
+.bt-layer img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.bt-layer-bg{
+  z-index:1;
+  inset:-8%;
+}
+
+.bt-layer-tower{
+  z-index:10;
+  inset:-7%;
+}
+
+.bt-layer-fog{
+  z-index:35;
+  opacity:.82;
+  mix-blend-mode:screen;
+}
+
+.bt-layer-fog-back{
+  z-index:8;
+  opacity:.45;
+  filter:blur(1px);
+  animation:btFogBack 12s ease-in-out infinite alternate;
+}
+
+.bt-layer-fog-front{
+  z-index:38;
+  opacity:.75;
+  animation:btFogFront 9s ease-in-out infinite alternate;
+}
+
+.bt-energy{
+  position:absolute;
+  inset:-4%;
+  z-index:18;
+  width:108%;
+  height:108%;
+  pointer-events:none;
+  filter:drop-shadow(0 0 8px rgba(255,49,89,.65));
+  mix-blend-mode:screen;
+}
+
+.bt-energy-line{
+  fill:none;
+  stroke:var(--bt-red);
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.75;
+  stroke-dasharray:40 28;
+  animation:btEnergyFlow 3.4s linear infinite,btEnergyPulse 2.2s ease-in-out infinite;
+}
+
+.line-b{
+  stroke:#21e8ff;
+  opacity:.45;
+  animation-duration:4.2s,2.8s;
+}
+
+.line-c{
+  stroke:#ff3159;
+  opacity:.58;
+  animation-duration:3.1s,2.5s;
+}
+
+.bt-topbar{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  z-index:60;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:calc(env(safe-area-inset-top) + 18px) 24px 18px;
+  background:
+    linear-gradient(180deg,rgba(7,8,25,.95),rgba(7,8,25,.82) 74%,rgba(7,8,25,0));
+  border-bottom:1px solid rgba(129,135,221,.28);
+  backdrop-filter:blur(8px);
+}
+
+.bt-title{
+  min-width:0;
+}
+
+.bt-title h1{
+  margin:0;
+  font-size:clamp(34px,7vw,76px);
+  line-height:.95;
+  font-weight:900;
+  letter-spacing:.2px;
+  text-shadow:0 4px 18px rgba(0,0,0,.45);
+}
+
+.bt-title p{
+  margin:12px 0 0;
+  color:var(--bt-muted);
+  font-size:clamp(20px,4.2vw,42px);
+  line-height:1;
+  font-weight:500;
+}
+
+.bt-profile{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  flex-shrink:0;
+}
+
+.bt-shards{
+  display:grid;
+  grid-template-columns:auto auto;
+  grid-template-rows:auto auto;
+  align-items:center;
+  column-gap:14px;
+  min-width:190px;
+  padding:12px 20px;
+  border-radius:28px;
+  background:rgba(19,21,58,.72);
+  border:2px solid rgba(111,119,200,.5);
+  box-shadow:inset 0 0 22px rgba(55,74,185,.25),0 0 24px rgba(255,49,89,.08);
+}
+
+.bt-shards img{
+  grid-row:1 / 3;
+  width:58px;
+  height:58px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 18px rgba(255,49,89,.55));
+}
+
+.bt-shards span{
+  font-size:44px;
+  line-height:.9;
+  font-weight:900;
+}
+
+.bt-shards small{
+  color:var(--bt-muted);
+  font-size:22px;
+  line-height:1;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+
+.bt-avatar{
+  width:96px;
+  height:96px;
+  border-radius:26px;
+  padding:5px;
+  background:linear-gradient(135deg,#ff3159,#ff5a72);
+  box-shadow:0 0 24px rgba(255,49,89,.3);
+}
+
+.bt-avatar img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  border-radius:21px;
+}
+
+.bt-hotspot{
+  position:absolute;
+  z-index:30;
+  width:260px;
+  min-height:170px;
+  padding:0;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  transform:translate3d(-50%,-50%,0);
+  will-change:transform,filter;
+}
+
+.bt-hotspot::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:190px;
+  height:190px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(37,232,255,.2),rgba(37,232,255,.08) 42%,transparent 70%);
+  filter:blur(4px);
+  opacity:.75;
+  transition:opacity .18s,transform .18s;
+}
+
+.bt-hotspot:hover::before,
+.bt-hotspot.is-active::before{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1.08);
+}
+
+.bt-hotspot-icon{
+  position:relative;
+  z-index:3;
+  display:block;
+  width:138px;
+  height:138px;
+  object-fit:contain;
+  margin:0 auto 8px;
+  filter:
+    drop-shadow(0 8px 4px rgba(0,0,0,.55))
+    drop-shadow(0 0 18px rgba(37,232,255,.45));
+  animation:btIconFloat 4.4s ease-in-out infinite;
+}
+
+.bt-hotspot-text{
+  position:relative;
+  z-index:4;
+  display:block;
+  text-align:center;
+  text-shadow:
+    0 4px 0 rgba(0,0,0,.75),
+    0 0 9px rgba(0,0,0,.9);
+}
+
+.bt-hotspot-text b{
+  display:block;
+  font-size:clamp(22px,4vw,46px);
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.01em;
+}
+
+.bt-hotspot-text small{
+  display:block;
+  margin-top:8px;
+  color:#c4c8df;
+  font-size:clamp(17px,3vw,33px);
+  line-height:1;
+  font-weight:520;
+}
+
+.bt-portal{
+  position:absolute;
+  left:50%;
+  top:42%;
+  z-index:1;
+  width:154px;
+  height:154px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  border:9px solid rgba(37,232,255,.88);
+  box-shadow:
+    0 0 18px rgba(37,232,255,.95),
+    0 0 42px rgba(37,232,255,.62),
+    inset 0 0 22px rgba(37,232,255,.65);
+  animation:btPortalPulse 2.2s ease-in-out infinite,btPortalSpin 8s linear infinite;
+}
+
+.bt-portal::before,
+.bt-portal::after{
+  content:"";
+  position:absolute;
+  inset:-16px;
+  border-radius:50%;
+  border:2px solid rgba(37,232,255,.26);
+}
+
+.bt-portal::after{
+  inset:18px;
+  border-color:rgba(255,255,255,.18);
+}
+
+.bt-heart-pulse{
+  position:absolute;
+  left:50%;
+  top:46%;
+  z-index:1;
+  width:210px;
+  height:210px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,49,89,.34),rgba(255,49,89,.12) 44%,transparent 72%);
+  filter:blur(3px);
+  animation:btHeartPulse 1.9s ease-in-out infinite;
+}
+
+.hotspot-melody{left:30%;top:29%}
+.hotspot-words{left:56%;top:37%}
+.hotspot-oracle{left:25%;top:54%}
+.hotspot-heart{left:50%;top:60%}
+.hotspot-arena{left:69%;top:57%}
+.hotspot-fame{left:42%;top:74%}
+.hotspot-daily{left:13%;top:78%}
+.hotspot-chest{left:85%;top:78%}
+.hotspot-collection{left:50%;top:88%}
+
+.is-primary .bt-hotspot-icon{
+  filter:
+    drop-shadow(0 8px 4px rgba(0,0,0,.55))
+    drop-shadow(0 0 26px rgba(37,232,255,.65));
+}
+
+.is-heart .bt-hotspot-icon{
+  width:188px;
+  height:188px;
+  filter:
+    drop-shadow(0 9px 5px rgba(0,0,0,.65))
+    drop-shadow(0 0 30px rgba(255,49,89,.75));
+}
+
+.bt-nav{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:65;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  min-height:118px;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgba(9,10,35,.92);
+  border-top:2px solid rgba(111,119,200,.36);
+  backdrop-filter:blur(10px);
+}
+
+.bt-nav-item{
+  position:relative;
+  border:0;
+  background:transparent;
+  color:#aeb3d0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:pointer;
+  overflow:hidden;
+}
+
+.bt-nav-item span{
+  font-size:36px;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.08));
+}
+
+.bt-nav-item b{
+  font-size:clamp(20px,4vw,40px);
+  line-height:1;
+  font-weight:850;
+}
+
+.bt-nav-item.is-active{
+  color:#fff;
+  background:linear-gradient(180deg,rgba(255,49,89,.16),rgba(255,49,89,.05));
+  box-shadow:inset 0 0 38px rgba(255,49,89,.18);
+}
+
+.bt-nav-item.is-active::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:4px;
+  background:var(--bt-red);
+  box-shadow:0 0 22px var(--bt-red);
+}
+
+.bt-nav-item.is-active span{
+  filter:drop-shadow(0 0 16px rgba(255,49,89,.72));
+}
+
+.bt-bridge-pill{
+  position:absolute;
+  right:12px;
+  bottom:calc(126px + env(safe-area-inset-bottom));
+  z-index:70;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(3,5,17,.62);
+  border:1px solid rgba(123,130,210,.28);
+  color:#aeb3d0;
+  font-size:11px;
+  font-weight:800;
+  backdrop-filter:blur(8px);
+}
+
+.bt-toast{
+  position:absolute;
+  left:50%;
+  bottom:calc(142px + env(safe-area-inset-bottom));
+  z-index:80;
+  transform:translateX(-50%);
+  max-width:min(520px,calc(100% - 32px));
+  padding:12px 16px;
+  border-radius:18px;
+  background:rgba(6,8,24,.86);
+  border:1px solid rgba(255,49,89,.35);
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
+  text-align:center;
+  box-shadow:0 12px 30px rgba(0,0,0,.35),0 0 24px rgba(255,49,89,.12);
+  backdrop-filter:blur(10px);
+}
+
+.bt-toast:not([hidden]){
+  animation:btToastIn .22s ease-out both;
+}
+
+@keyframes btPortalPulse{
+  0%,100%{opacity:.78;transform:translate(-50%,-50%) scale(.96)}
+  50%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}
+}
+
+@keyframes btPortalSpin{
+  to{rotate:360deg}
+}
+
+@keyframes btIconFloat{
+  0%,100%{transform:translateY(0) rotate(-1deg)}
+  50%{transform:translateY(-10px) rotate(1deg)}
+}
+
+@keyframes btHeartPulse{
+  0%,100%{opacity:.64;transform:translate(-50%,-50%) scale(.88)}
+  45%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}
+  62%{opacity:.8;transform:translate(-50%,-50%) scale(1)}
+}
+
+@keyframes btEnergyFlow{
+  to{stroke-dashoffset:-136}
+}
+
+@keyframes btEnergyPulse{
+  0%,100%{opacity:.4}
+  50%{opacity:1}
+}
+
+@keyframes btFogBack{
+  from{transform:translate3d(-1.5%,0,0)}
+  to{transform:translate3d(1.5%,1%,0)}
+}
+
+@keyframes btFogFront{
+  from{transform:translate3d(2%,0,0) scale(1)}
+  to{transform:translate3d(-2%,1%,0) scale(1.03)}
+}
+
+@keyframes btToastIn{
+  from{opacity:0;transform:translateX(-50%) translateY(12px) scale(.96)}
+  to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+}
+
+@media(max-width:720px){
+  .bt-topbar{
+    padding-left:14px;
+    padding-right:14px;
+  }
+
+  .bt-profile{
+    gap:9px;
+  }
+
+  .bt-shards{
+    min-width:118px;
+    padding:8px 11px;
+    border-radius:18px;
+    column-gap:8px;
+  }
+
+  .bt-shards img{
+    width:38px;
+    height:38px;
+  }
+
+  .bt-shards span{
+    font-size:28px;
+  }
+
+  .bt-shards small{
+    font-size:13px;
+  }
+
+  .bt-avatar{
+    width:62px;
+    height:62px;
+    border-radius:18px;
+  }
+
+  .bt-avatar img{
+    border-radius:14px;
+  }
+
+  .bt-hotspot{
+    width:168px;
+    min-height:124px;
+  }
+
+  .bt-hotspot-icon{
+    width:86px;
+    height:86px;
+    margin-bottom:4px;
+  }
+
+  .bt-portal{
+    width:108px;
+    height:108px;
+    border-width:6px;
+  }
+
+  .is-heart .bt-hotspot-icon{
+    width:128px;
+    height:128px;
+  }
+
+  .bt-heart-pulse{
+    width:150px;
+    height:150px;
+  }
+
+  .bt-nav{
+    min-height:88px;
+  }
+
+  .bt-nav-item span{
+    font-size:26px;
+  }
+
+  .bt-bridge-pill{
+    display:none;
+  }
+}
+
+@media(max-width:460px){
+  .bt-layer,
+  .bt-layer-bg,
+  .bt-layer-tower{
+    inset:-10% -36%;
+  }
+
+  .bt-topbar{
+    gap:8px;
+  }
+
+  .bt-title h1{
+    font-size:34px;
+  }
+
+  .bt-title p{
+    margin-top:7px;
+    font-size:20px;
+  }
+
+  .bt-shards{
+    min-width:104px;
+  }
+
+  .bt-shards small{
+    display:none;
+  }
+
+  .bt-avatar{
+    width:56px;
+    height:56px;
+  }
+
+  .hotspot-melody{left:25%;top:28%}
+  .hotspot-words{left:58%;top:36%}
+  .hotspot-oracle{left:24%;top:53%}
+  .hotspot-heart{left:50%;top:61%}
+  .hotspot-arena{left:74%;top:56%}
+  .hotspot-fame{left:43%;top:74%}
+  .hotspot-daily{left:14%;top:78%}
+  .hotspot-chest{left:85%;top:78%}
+  .hotspot-collection{left:51%;top:89%}
+}
+
 @media(prefers-reduced-motion:reduce){
-  .gc-aurora,.gc-heart-aura,.gc-heart-3d,.gc-score-ghost{animation:none}
-  .gc-panorama{transition:none}
-  .gc-heart-canvas{display:none}
+  .bt-portal,
+  .bt-hotspot-icon,
+  .bt-heart-pulse,
+  .bt-energy-line,
+  .bt-layer-fog-back,
+  .bt-layer-fog-front{
+    animation:none!important;
+  }
+
+  .bt-particles{
+    display:none;
+  }
 }
 
 //=================================================
