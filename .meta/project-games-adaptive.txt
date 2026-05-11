@@ -59,7 +59,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-11 16:19:31 UTC
+Сгенерировано: 2026-05-11 18:43:41 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -480,11 +480,30 @@ try {
   <meta name="description" content="Музыкальный игровой центр Витрина Разбита">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body data-mode="lobby">
   <main class="bt-app" id="app">
     <section class="bt-scene" id="scene" aria-label="Башня Витрины">
       <div class="bt-world" id="world">
         <img class="bt-bg" id="bg-image" src="./assets/tower/bg.webp" alt="Башня Витрины" decoding="async" fetchpriority="high">
+
+        <header class="bt-topbar" aria-label="Профиль Game Center">
+          <div class="bt-title">
+            <h1>Башня Витрины</h1>
+            <p>Музыкальный игровой центр</p>
+          </div>
+          <div class="bt-profile">
+            <div class="bt-shards">
+              <span class="bt-shard-icon">♦</span>
+              <b id="shards-count">1250</b>
+              <small>осколков</small>
+            </div>
+            <div class="bt-avatar" id="avatar-box">👤</div>
+          </div>
+        </header>
+
+        <button class="bt-enter-game" type="button" id="enter-game">
+          <span>Войти</span>
+        </button>
 
         <button class="bt-hotspot hotspot-melody" type="button" data-door="melody" aria-label="Зал Мелодий"></button>
         <button class="bt-hotspot hotspot-words" type="button" data-door="words" aria-label="Кузница Слов"></button>
@@ -496,10 +515,24 @@ try {
         <button class="bt-hotspot hotspot-chest" type="button" data-door="chest" aria-label="Сундук Осколков"></button>
         <button class="bt-hotspot hotspot-collection" type="button" data-door="collection" aria-label="Коллекция"></button>
 
-        <button class="bt-nav-hotspot nav-games" type="button" data-door="nav:games" aria-label="Игры"></button>
-        <button class="bt-nav-hotspot nav-tournaments" type="button" data-door="nav:tournaments" aria-label="Турниры"></button>
-        <button class="bt-nav-hotspot nav-rating" type="button" data-door="nav:rating" aria-label="Рейтинг"></button>
-        <button class="bt-nav-hotspot nav-profile" type="button" data-door="nav:profile" aria-label="Профиль"></button>
+        <footer class="bt-nav" aria-label="Навигация Game Center">
+          <button class="bt-nav-item nav-exit" type="button" id="exit-game" aria-label="Выход">
+            <span>↩</span>
+            <b>Выход</b>
+          </button>
+          <button class="bt-nav-item" type="button" data-door="nav:tournaments" aria-label="Турниры">
+            <span>🏆</span>
+            <b>Турниры</b>
+          </button>
+          <button class="bt-nav-item" type="button" data-door="nav:rating" aria-label="Рейтинг">
+            <span>▥</span>
+            <b>Рейтинг</b>
+          </button>
+          <button class="bt-nav-item" type="button" data-door="nav:profile" aria-label="Профиль">
+            <span>●</span>
+            <b>Профиль</b>
+          </button>
+        </footer>
       </div>
 
       <div class="bt-bridge-pill" id="bridge-pill">bridge: wait</div>
@@ -507,7 +540,7 @@ try {
     </section>
   </main>
 
-  <script type="module" src="./src/app.js"></script>
+  <script src="./src/app.js" defer></script>
 </body>
 </html>
 
