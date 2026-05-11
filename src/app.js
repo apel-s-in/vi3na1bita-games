@@ -1,7 +1,7 @@
-// UID.001_(Playback safety invariant)_(game-app не управляет музыкой)_(нет audio/webAudio/playback commands)
-// UID.006_(Lazy isolated micro-app)_(работает только внутри iframe или standalone preview)_(основной app загружает его по клику)
+// UID.001_(Playback safety invariant)_(game-app не управляет музыкой)_(нет audio/WebAudio/playback commands)
+// UID.006_(Lazy isolated micro-app)_(работает внутри iframe или standalone preview)_(основной app загружает его по клику)
 // UID.082_(Local truth vs external telemetry split)_(получаем только safe snapshot)_(не читаем localStorage/IndexedDB/token)
-// UID.094_(No-paralysis rule)_(ошибка Game Center не ломает основное приложение)_(только postMessage + CSS/Canvas panorama)
+// UID.094_(No-paralysis rule)_(ошибка Game Center не ломает основное приложение)_(только postMessage + CSS/Canvas parallax)
 
 const $ = id => document.getElementById(id);
 const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
@@ -9,21 +9,22 @@ const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.
 const state = {
   bridgeId: '',
   snapshot: null,
-  yaw: 0,
-  dragging: false,
+  activeDoor: '',
+  pointerDown: false,
+  targetX: 0,
+  targetY: 0,
+  lookX: 0,
+  lookY: 0,
   startX: 0,
-  startYaw: 0,
-  lastDoor: ''
+  startY: 0,
+  dragX: 0,
+  dragY: 0,
+  targetDragX: 0,
+  targetDragY: 0,
+  raf: 0
 };
 
-const log = msg => {
-  const box = $('log');
-  if (!box) return;
-  const row = document.createElement('div');
-  row.textContent = `[${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}] ${msg}`;
-  box.prepend(row);
-  while (box.children.length > 20) box.lastElementChild?.remove();
-};
+const scene = $('scene');
 
 const send = (type, payload = {}) => {
   if (!state.bridgeId || !window.parent || window.parent === window) return false;
@@ -33,6 +34,19 @@ const send = (type, payload = {}) => {
   } catch {
     return false;
   }
+};
+
+const showToast = text => {
+  const toast = $('toast');
+  if (!toast) return;
+
+  toast.textContent = text;
+  toast.hidden = false;
+
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => {
+    toast.hidden = true;
+  }, 1700);
 };
 
 const fmtNum = value => {
@@ -45,65 +59,15 @@ const fmtNum = value => {
 
 const applySnapshot = snapshot => {
   state.snapshot = snapshot || state.snapshot || {};
-  const p = state.snapshot?.progress || {};
-  const u = state.snapshot?.user || {};
-  const pl = state.snapshot?.player || {};
 
-  $('level').textContent = p.level ?? '—';
-  $('xp').textContent = fmtNum(p.xp ?? 0);
-  $('ach').textContent = `${p.achievementsUnlocked ?? 0}/${p.achievementsTotal ?? 0}`;
-  $('track').textContent = pl.title || (pl.playing ? 'играет' : '—');
+  const progress = state.snapshot?.progress || {};
+  const user = state.snapshot?.user || {};
 
-  const name = u.displayName || 'гость';
-  const level = p.level || 1;
-  $('user-line').textContent = `${name} · ${level} ур.`;
-};
+  const shardText = $('shards-count');
+  if (shardText) shardText.textContent = fmtNum(progress.xp || 1250);
 
-const updateYaw = value => {
-  state.yaw = ((value % 360) + 360) % 360;
-  const x = -state.yaw / 360 * 66.666;
-  const panorama = $('panorama');
-  if (panorama) panorama.style.transform = `translate3d(${x}%,0,0)`;
-
-  const sector = Math.round(state.yaw / 60) % 6;
-  const labels = ['Game Hub', 'Трофеи', 'Достижения', 'Турниры', 'Магазин', 'Профиль'];
-  $('yaw-line').textContent = `${Math.round(state.yaw)}° · ${labels[sector]} · потяни комнату`;
-};
-
-const bindRoom = () => {
-  const room = $('room');
-  if (!room) return;
-
-  room.addEventListener('pointerdown', e => {
-    if (e.target?.closest?.('button')) return;
-    state.dragging = true;
-    state.startX = e.clientX;
-    state.startYaw = state.yaw;
-    room.setPointerCapture?.(e.pointerId);
-  });
-
-  room.addEventListener('pointermove', e => {
-    if (!state.dragging) return;
-    updateYaw(state.startYaw - (e.clientX - state.startX) * 0.42);
-  });
-
-  const end = e => {
-    state.dragging = false;
-    try { room.releasePointerCapture?.(e.pointerId); } catch {}
-  };
-
-  room.addEventListener('pointerup', end);
-  room.addEventListener('pointercancel', end);
-
-  document.querySelectorAll('[data-door]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const door = btn.dataset.door || 'unknown';
-      state.lastDoor = door;
-      log(`Открыта дверь: ${door}`);
-      send('GC_DOOR_CLICKED', { door, yaw: Math.round(state.yaw), at: Date.now() });
-    });
-  });
+  const avatar = document.querySelector('.bt-avatar img');
+  if (avatar && user.avatar) avatar.src = user.avatar;
 };
 
 const bindBridge = () => {
@@ -115,7 +79,6 @@ const bindBridge = () => {
       state.bridgeId = d.bridgeId || d.payload?.bridgeId || '';
       $('bridge-pill').textContent = state.bridgeId ? 'bridge: connected' : 'bridge: no id';
       applySnapshot(d.payload?.snapshot);
-      log('GC_INIT принят от host');
       send('GC_READY', { at: Date.now(), userAgent: navigator.userAgent.slice(0, 80) });
       send('GC_REQUEST_SNAPSHOT');
       return;
@@ -125,7 +88,6 @@ const bindBridge = () => {
 
     if (d.type === 'GC_SNAPSHOT' || d.type === 'GC_HOST_STATE') {
       applySnapshot(d.payload);
-      log(d.type === 'GC_SNAPSHOT' ? 'snapshot обновлён' : 'host state обновлён');
     }
   });
 
@@ -133,171 +95,203 @@ const bindBridge = () => {
     $('bridge-pill').textContent = 'standalone';
     applySnapshot({
       user: { displayName: 'Standalone' },
-      progress: { level: 1, xp: 0, achievementsUnlocked: 0, achievementsTotal: 0 },
+      progress: { level: 1, xp: 1250, achievementsUnlocked: 0, achievementsTotal: 0 },
       player: { title: '' }
     });
-    log('Запущено standalone, без parent bridge');
-  } else {
-    log('Ожидаем GC_INIT от основного приложения...');
   }
 };
 
-const createHeartEngine = canvas => {
+const bindHotspots = () => {
+  document.querySelectorAll('.bt-hotspot').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+
+      const door = btn.dataset.door || 'unknown';
+      const title = btn.querySelector('b')?.textContent || door;
+
+      state.activeDoor = door;
+
+      document.querySelectorAll('.bt-hotspot').forEach(x => {
+        x.classList.toggle('is-active', x === btn);
+      });
+
+      showToast(`${title}: скоро откроется`);
+      send('GC_DOOR_CLICKED', { door, at: Date.now() });
+
+      spawnBurst(btn);
+    });
+  });
+
+  document.querySelectorAll('.bt-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.bt-nav-item').forEach(x => {
+        x.classList.toggle('is-active', x === btn);
+      });
+
+      const nav = btn.dataset.nav || 'unknown';
+      showToast(`Раздел: ${btn.textContent.trim()}`);
+      send('GC_DOOR_CLICKED', { door: `nav:${nav}`, at: Date.now() });
+    });
+  });
+};
+
+const getPointerLook = e => {
+  const r = scene.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+
+  return {
+    x: Math.max(-1, Math.min(1, (e.clientX - cx) / (r.width / 2))),
+    y: Math.max(-1, Math.min(1, (e.clientY - cy) / (r.height / 2)))
+  };
+};
+
+const bindParallaxInput = () => {
+  if (!scene) return;
+
+  scene.addEventListener('pointerdown', e => {
+    if (e.target?.closest?.('button')) return;
+
+    state.pointerDown = true;
+    state.startX = e.clientX;
+    state.startY = e.clientY;
+    scene.setPointerCapture?.(e.pointerId);
+  });
+
+  scene.addEventListener('pointermove', e => {
+    const look = getPointerLook(e);
+    state.targetX = look.x;
+    state.targetY = look.y;
+
+    if (state.pointerDown) {
+      state.targetDragX += (e.movementX || 0) * 0.18;
+      state.targetDragY += (e.movementY || 0) * 0.08;
+      state.targetDragX = Math.max(-90, Math.min(90, state.targetDragX));
+      state.targetDragY = Math.max(-40, Math.min(40, state.targetDragY));
+    }
+  });
+
+  const end = e => {
+    state.pointerDown = false;
+    try { scene.releasePointerCapture?.(e.pointerId); } catch {}
+  };
+
+  scene.addEventListener('pointerup', end);
+  scene.addEventListener('pointercancel', end);
+
+  window.addEventListener('deviceorientation', e => {
+    if (!Number.isFinite(e.gamma) || !Number.isFinite(e.beta)) return;
+    state.targetX = Math.max(-1, Math.min(1, e.gamma / 28));
+    state.targetY = Math.max(-1, Math.min(1, (e.beta - 45) / 42));
+  }, { passive: true });
+};
+
+const updateParallax = () => {
+  state.lookX += (state.targetX - state.lookX) * 0.075;
+  state.lookY += (state.targetY - state.lookY) * 0.075;
+  state.dragX += (state.targetDragX - state.dragX) * 0.08;
+  state.dragY += (state.targetDragY - state.dragY) * 0.08;
+
+  document.querySelectorAll('[data-depth]').forEach(el => {
+    const depth = Number(el.dataset.depth || 0);
+    const x = state.dragX * depth + state.lookX * depth * 46;
+    const y = state.dragY * depth + state.lookY * depth * 30;
+
+    if (el.classList.contains('bt-hotspot')) {
+      el.style.translate = `${x}px ${y}px`;
+    } else {
+      el.style.transform = `translate3d(${x}px,${y}px,0)`;
+    }
+  });
+};
+
+const createParticleEngine = canvas => {
   if (!canvas || prefersReduced) {
-    return { start() {}, stop() {}, resize() {} };
+    return { start() {}, stop() {}, burst() {}, resize() {} };
   }
 
   const ctx = canvas.getContext('2d', { alpha: true });
   const particles = [];
-  let raf = 0;
-  let running = false;
   let width = 0;
   let height = 0;
   let dpr = 1;
-  let startedAt = performance.now();
+  let raf = 0;
+  let running = false;
 
   const rand = (min, max) => min + Math.random() * (max - min);
 
-  const heartPoint = t => {
-    const x = 16 * Math.pow(Math.sin(t), 3);
-    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-    return { x, y };
-  };
-
   const resize = () => {
-    const rect = canvas.getBoundingClientRect();
+    const r = canvas.getBoundingClientRect();
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    width = Math.max(1, Math.floor(rect.width * dpr));
-    height = Math.max(1, Math.floor(rect.height * dpr));
+    width = Math.max(1, Math.floor(r.width * dpr));
+    height = Math.max(1, Math.floor(r.height * dpr));
     canvas.width = width;
     canvas.height = height;
   };
 
-  const resetParticle = p => {
-    const t = rand(0, Math.PI * 2);
-    const pt = heartPoint(t);
-    const scale = Math.min(width, height) / 38;
-    const cx = width / 2;
-    const cy = height * 0.49;
-
-    p.t = t;
-    p.speed = rand(0.004, 0.011);
-    p.x = cx + pt.x * scale + rand(-40, 40) * dpr;
-    p.y = cy + pt.y * scale + rand(-40, 40) * dpr;
-    p.vx = 0;
-    p.vy = 0;
-    p.size = rand(0.8, 2.1) * dpr;
-    p.force = rand(0.035, 0.075);
-    p.hue = rand(348, 365);
-    p.alpha = rand(0.28, 0.82);
-    p.trace = Array.from({ length: 9 }, () => ({ x: p.x, y: p.y }));
+  const addParticle = (x, y, burst = false) => {
+    particles.push({
+      x,
+      y,
+      vx: rand(-0.35, 0.35) * dpr * (burst ? 6 : 1),
+      vy: rand(-0.55, -0.05) * dpr * (burst ? 6 : 1),
+      life: burst ? rand(28, 62) : rand(90, 220),
+      maxLife: burst ? 62 : 220,
+      size: rand(1, burst ? 4 : 2.6) * dpr,
+      hue: Math.random() > 0.35 ? rand(186, 198) : rand(342, 354)
+    });
   };
 
-  const init = () => {
-    resize();
+  const seed = () => {
     particles.length = 0;
-    const base = Math.min(width, height);
-    const count = Math.max(70, Math.min(190, Math.floor(base / 2.25)));
-
-    for (let i = 0; i < count; i++) {
-      const p = {};
-      resetParticle(p);
-      particles.push(p);
+    for (let i = 0; i < 95; i++) {
+      addParticle(rand(0, width), rand(height * .12, height * .95));
     }
   };
 
-  const drawCoreGlow = time => {
-    const pulse = 1 + Math.sin(time * 0.004) * 0.06;
-    const cx = width / 2;
-    const cy = height * 0.49;
-    const r = Math.min(width, height) * 0.32 * pulse;
+  const burst = (clientX, clientY) => {
+    const r = canvas.getBoundingClientRect();
+    const x = (clientX - r.left) * dpr;
+    const y = (clientY - r.top) * dpr;
 
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0, 'rgba(255, 45, 85, .28)');
-    g.addColorStop(0.28, 'rgba(232, 1, 0, .16)');
-    g.addColorStop(0.58, 'rgba(121, 231, 255, .06)');
-    g.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
+    for (let i = 0; i < 38; i++) addParticle(x, y, true);
   };
 
-  const drawCrimsonThreads = time => {
-    const cx = width / 2;
-    const cy = height * 0.49;
-    const scale = Math.min(width, height) / 38;
-    const beat = 1 + Math.sin(time * 0.006) * 0.045 + Math.sin(time * 0.013) * 0.018;
+  const frame = () => {
+    if (!running || document.hidden) return;
 
+    updateParallax();
+
+    ctx.clearRect(0, 0, width, height);
     ctx.globalCompositeOperation = 'lighter';
 
-    for (const p of particles) {
-      p.t += p.speed;
-      if (p.t > Math.PI * 2) p.t -= Math.PI * 2;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
 
-      const pt = heartPoint(p.t);
-      const tx = cx + pt.x * scale * beat;
-      const ty = cy + pt.y * scale * beat;
-
-      p.vx += (tx - p.x) * p.force;
-      p.vy += (ty - p.y) * p.force;
-      p.vx *= 0.78;
-      p.vy *= 0.78;
+      p.life -= 1;
       p.x += p.vx;
       p.y += p.vy;
+      p.vy += 0.006 * dpr;
 
-      p.trace.unshift({ x: p.x, y: p.y });
-      p.trace.length = 9;
+      const alpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = `hsla(${p.hue}, 100%, 62%, ${alpha * .8})`;
+      ctx.shadowBlur = 12 * dpr;
+      ctx.shadowColor = `hsla(${p.hue}, 100%, 60%, .9)`;
 
-      ctx.beginPath();
-      for (let i = 0; i < p.trace.length - 1; i++) {
-        const a = p.trace[i];
-        const b = p.trace[i + 1];
-        ctx.strokeStyle = `hsla(${p.hue}, 100%, ${58 - i * 2}%, ${p.alpha * (1 - i / p.trace.length)})`;
-        ctx.lineWidth = Math.max(0.4 * dpr, p.size * (1 - i / p.trace.length));
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-      }
-      ctx.stroke();
-
-      ctx.fillStyle = `hsla(${p.hue}, 100%, 68%, ${p.alpha})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
+
+      if (p.life <= 0 || p.y < -20 || p.y > height + 30) {
+        particles.splice(i, 1);
+      }
     }
-  };
 
-  const drawShards = time => {
-    const cx = width / 2;
-    const cy = height * 0.49;
-    const amount = 18;
+    ctx.shadowBlur = 0;
 
-    ctx.globalCompositeOperation = 'screen';
-    for (let i = 0; i < amount; i++) {
-      const a = (i / amount) * Math.PI * 2 + Math.sin(time * 0.0008 + i) * 0.08;
-      const r1 = Math.min(width, height) * (0.18 + (i % 5) * 0.018);
-      const r2 = r1 + Math.min(width, height) * 0.18;
-      const x1 = cx + Math.cos(a) * r1;
-      const y1 = cy + Math.sin(a) * r1 * 0.72;
-      const x2 = cx + Math.cos(a) * r2;
-      const y2 = cy + Math.sin(a) * r2 * 0.72;
-
-      ctx.strokeStyle = i % 3 === 0 ? 'rgba(121,231,255,.14)' : 'rgba(255,45,85,.12)';
-      ctx.lineWidth = 0.8 * dpr;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
+    while (particles.length < 95) {
+      addParticle(rand(0, width), height + rand(0, 80) * dpr);
     }
-  };
-
-  const frame = time => {
-    if (!running || document.hidden) return;
-
-    ctx.clearRect(0, 0, width, height);
-    drawCoreGlow(time - startedAt);
-    drawShards(time - startedAt);
-    drawCrimsonThreads(time - startedAt);
 
     raf = requestAnimationFrame(frame);
   };
@@ -305,7 +299,6 @@ const createHeartEngine = canvas => {
   const start = () => {
     if (running || document.hidden) return;
     running = true;
-    startedAt = performance.now();
     raf = requestAnimationFrame(frame);
   };
 
@@ -315,36 +308,40 @@ const createHeartEngine = canvas => {
     raf = 0;
   };
 
-  init();
+  resize();
+  seed();
 
-  return { start, stop, resize: init };
+  return { start, stop, burst, resize: () => { resize(); seed(); } };
+};
+
+let particleEngine = null;
+
+const spawnBurst = el => {
+  if (!particleEngine || !el) return;
+  const r = el.getBoundingClientRect();
+  particleEngine.burst(r.left + r.width / 2, r.top + r.height / 2);
 };
 
 const init = () => {
-  bindRoom();
   bindBridge();
+  bindHotspots();
+  bindParallaxInput();
 
-  const initialYaw = Math.floor(Math.random() * 360);
-  updateYaw(initialYaw);
-
-  const heartEngine = createHeartEngine($('heart-canvas'));
-  heartEngine.start();
+  particleEngine = createParticleEngine($('particles'));
+  particleEngine.start();
 
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => heartEngine.resize(), 120);
+    resizeTimer = setTimeout(() => particleEngine.resize(), 140);
   });
 
   document.addEventListener('visibilitychange', () => {
-    document.body.toggleAttribute('data-hidden', document.hidden);
     if (document.hidden) {
-      heartEngine.stop();
-      log('document hidden: Canvas-анимация остановлена');
+      particleEngine.stop();
     } else {
-      heartEngine.resize();
-      heartEngine.start();
-      log('document visible: Canvas-анимация запущена');
+      particleEngine.resize();
+      particleEngine.start();
     }
   });
 };
