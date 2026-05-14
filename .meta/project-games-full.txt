@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-14 22:02:26 UTC
+Сгенерировано: 2026-05-14 22:15:41 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -576,6 +576,7 @@ Important:
     bridgeId: '',
     snapshot: null,
     mode: 'lobby',
+    screen: 'tower',
     touchY: 0
   };
 
@@ -687,10 +688,93 @@ Important:
 
   const exitGame = async () => {
     showToast('Выход из Башни');
+    closePanel();
     send('GC_CLOSE', { reason: 'user_exit', at: Date.now() });
     await exitGameFullscreen();
     setMode('lobby');
     fitWorld();
+  };
+
+  const getPanel = () => {
+    let panel = $('bt-panel');
+    if (panel) return panel;
+
+    const world = $('world');
+    if (!world) return null;
+
+    panel = document.createElement('section');
+    panel.className = 'bt-panel';
+    panel.id = 'bt-panel';
+    panel.hidden = true;
+    world.appendChild(panel);
+
+    return panel;
+  };
+
+  const closePanel = () => {
+    const panel = $('bt-panel');
+    if (!panel) return;
+    panel.hidden = true;
+    panel.innerHTML = '';
+    state.screen = 'tower';
+  };
+
+  const openGame = gameId => {
+    if (gameId !== 'war_hearts') return;
+    showToast('Открываем Войну Сердец');
+    send('GC_DOOR_CLICKED', { door: 'arena:war_hearts', at: Date.now() });
+    window.location.href = './war_hearts/';
+  };
+
+  const openArena = () => {
+    const panel = getPanel();
+    if (!panel) return;
+
+    state.screen = 'arena';
+    panel.hidden = false;
+    panel.innerHTML = `
+      <div class="bt-panel-head">
+        <button class="bt-panel-back" type="button" data-panel-close aria-label="Назад">‹</button>
+        <div>
+          <h2>Арена Турниров</h2>
+          <p>Выберите игру для дуэли или тренировки</p>
+        </div>
+      </div>
+
+      <div class="bt-games-list">
+        <button class="bt-game-card" type="button" data-game="war_hearts">
+          <div class="bt-game-icon">💔</div>
+          <div class="bt-game-info">
+            <h3>Война Сердец</h3>
+            <p>Морской бой 10×10 в стилистике разбитых сердец. Дуэль, чат, голос и режим против компьютера.</p>
+            <div class="bt-game-tags">
+              <span>P2P</span>
+              <span>10×10</span>
+              <span>Voice</span>
+              <span>Demo AI</span>
+            </div>
+          </div>
+          <div class="bt-game-arrow">›</div>
+        </button>
+
+        <div class="bt-game-card bt-game-card-soon" aria-disabled="true">
+          <div class="bt-game-icon">🏆</div>
+          <div class="bt-game-info">
+            <h3>Скоро новая дуэль</h3>
+            <p>Следующая мини-игра появится отдельным модулем в Game Center.</p>
+            <div class="bt-game-tags">
+              <span>soon</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    panel.querySelector('[data-panel-close]')?.addEventListener('click', closePanel);
+    panel.querySelector('[data-game="war_hearts"]')?.addEventListener('click', () => openGame('war_hearts'));
+
+    showToast('Арена Турниров');
+    send('GC_DOOR_CLICKED', { door: 'arena', at: Date.now() });
   };
 
   const bindBridge = () => {
@@ -768,6 +852,17 @@ Important:
 
         const door = btn.dataset.door || 'unknown';
         const label = btn.getAttribute('aria-label') || door;
+
+        if (door === 'arena' || door === 'nav:tournaments') {
+          openArena();
+          return;
+        }
+
+        if (door === 'nav:friends') {
+          showToast('Друзья: скоро появятся');
+          send('GC_DOOR_CLICKED', { door, at: Date.now() });
+          return;
+        }
 
         showToast(`${label}: скоро откроется`);
         send('GC_DOOR_CLICKED', { door, at: Date.now() });
