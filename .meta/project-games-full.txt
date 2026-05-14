@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-14 18:44:25 UTC
+Сгенерировано: 2026-05-14 20:47:04 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -105,7 +105,9 @@ jobs:
             --exclude ".DS_Store" \
             --exclude "README.md" \
             --exclude "ai-rules.txt" \
-            --exclude "generate-context.js"
+            --exclude "generate-context.js" \
+            --exclude "war_hearts/*" \
+            --exclude "war_hearts/**"
 
           aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./index.html "s3://$BUCKET/$PREFIX/index.html" \
             --only-show-errors \
