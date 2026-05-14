@@ -149,17 +149,71 @@
 
   const closePanel = () => {
     const panel = $('bt-panel');
-    if (!panel) return;
-    panel.hidden = true;
-    panel.innerHTML = '';
+    if (panel) {
+      panel.hidden = true;
+      panel.innerHTML = '';
+    }
+
+    const gameHost = $('bt-game-host');
+    if (gameHost) {
+      gameHost.hidden = true;
+      gameHost.innerHTML = '';
+    }
+
     state.screen = 'tower';
+  };
+
+  const closeGameHost = () => {
+    const gameHost = $('bt-game-host');
+    if (gameHost) {
+      gameHost.hidden = true;
+      gameHost.innerHTML = '';
+    }
+    openArena();
+    fitWorld();
   };
 
   const openGame = gameId => {
     if (gameId !== 'war_hearts') return;
+
+    const world = $('world');
+    if (!world) return;
+
+    const panel = $('bt-panel');
+    if (panel) panel.hidden = true;
+
+    let gameHost = $('bt-game-host');
+    if (!gameHost) {
+      gameHost = document.createElement('section');
+      gameHost.className = 'bt-game-host';
+      gameHost.id = 'bt-game-host';
+      world.appendChild(gameHost);
+    }
+
+    gameHost.hidden = false;
+    gameHost.innerHTML = `
+      <div class="bt-game-host-bar">
+        <button class="bt-game-host-back" type="button" data-game-close aria-label="Назад">‹</button>
+        <div>
+          <b>Война Сердец</b>
+          <small>Арена Турниров</small>
+        </div>
+      </div>
+      <iframe
+        class="bt-game-frame"
+        title="Война Сердец"
+        src="./war_hearts/?host=game_center"
+        allow="fullscreen; microphone"
+        allowfullscreen
+        referrerpolicy="no-referrer"
+      ></iframe>
+    `;
+
+    gameHost.querySelector('[data-game-close]')?.addEventListener('click', closeGameHost);
+
     showToast('Открываем Войну Сердец');
     send('GC_DOOR_CLICKED', { door: 'arena:war_hearts', at: Date.now() });
-    window.location.href = './war_hearts/';
+    fitWorld();
   };
 
   const openArena = () => {
