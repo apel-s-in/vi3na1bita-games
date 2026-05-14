@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-14 22:54:00 UTC
+Сгенерировано: 2026-05-14 23:17:30 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -122,6 +122,11 @@ jobs:
           aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./src/app.js "s3://$BUCKET/$PREFIX/src/app.js" \
             --only-show-errors \
             --cache-control "public, max-age=300" \
+            --content-type "application/javascript; charset=utf-8"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./common/network-bridge.js "s3://$BUCKET/$PREFIX/common/network-bridge.js" \
+            --only-show-errors \
+            --cache-control "public, max-age=120" \
             --content-type "application/javascript; charset=utf-8"
 
 //=================================================
