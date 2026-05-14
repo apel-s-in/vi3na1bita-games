@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-14 22:15:41 UTC
+Сгенерировано: 2026-05-14 22:16:11 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1330,6 +1330,170 @@ body[data-mode="play"] .bt-toast{
   .bt-avatar{
     width:46px;
     height:46px;
+  }
+}
+
+.bt-panel{
+  position:absolute;
+  left:10px;
+  right:10px;
+  top:84px;
+  bottom:calc(86px + env(safe-area-inset-bottom));
+  z-index:28;
+  overflow:auto;
+  padding:12px;
+  border-radius:24px;
+  background:linear-gradient(180deg,rgba(9,11,34,.96),rgba(5,7,20,.98));
+  border:1px solid rgba(123,130,210,.34);
+  box-shadow:0 20px 60px rgba(0,0,0,.58),inset 0 0 28px rgba(37,232,255,.05);
+  backdrop-filter:blur(10px);
+  -webkit-overflow-scrolling:touch;
+}
+
+.bt-panel[hidden]{
+  display:none;
+}
+
+.bt-panel-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.bt-panel-back{
+  width:42px;
+  height:42px;
+  flex-shrink:0;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-size:34px;
+  line-height:1;
+  cursor:pointer;
+}
+
+.bt-panel-head h2{
+  margin:0;
+  font-size:24px;
+  line-height:1;
+  font-weight:950;
+}
+
+.bt-panel-head p{
+  margin:4px 0 0;
+  color:var(--bt-muted);
+  font-size:12px;
+  line-height:1.25;
+}
+
+.bt-games-list{
+  display:grid;
+  gap:10px;
+}
+
+.bt-game-card{
+  width:100%;
+  min-height:118px;
+  display:grid;
+  grid-template-columns:58px 1fr auto;
+  align-items:center;
+  gap:12px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:12px;
+  background:
+    radial-gradient(circle at 10% 10%,rgba(255,49,89,.22),transparent 38%),
+    linear-gradient(135deg,rgba(255,49,89,.13),rgba(37,232,255,.06)),
+    rgba(16,20,50,.92);
+  color:#fff;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 12px 28px rgba(0,0,0,.28);
+}
+
+.bt-game-card:active{
+  transform:scale(.985);
+}
+
+.bt-game-card-soon{
+  opacity:.58;
+  cursor:default;
+}
+
+.bt-game-icon{
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,rgba(255,49,89,.92),rgba(124,77,255,.74));
+  font-size:30px;
+  box-shadow:0 0 24px rgba(255,49,89,.22);
+}
+
+.bt-game-info{
+  min-width:0;
+}
+
+.bt-game-info h3{
+  margin:0 0 5px;
+  font-size:18px;
+  font-weight:950;
+}
+
+.bt-game-info p{
+  margin:0;
+  color:#c6cbed;
+  font-size:12px;
+  line-height:1.3;
+}
+
+.bt-game-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:8px;
+}
+
+.bt-game-tags span{
+  padding:3px 7px;
+  border-radius:999px;
+  background:rgba(37,232,255,.1);
+  border:1px solid rgba(37,232,255,.18);
+  color:#bff8ff;
+  font-size:10px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+.bt-game-arrow{
+  color:#fff;
+  font-size:30px;
+  opacity:.72;
+}
+
+@media(max-width:430px){
+  .bt-panel{
+    left:8px;
+    right:8px;
+    top:78px;
+    bottom:calc(82px + env(safe-area-inset-bottom));
+    border-radius:20px;
+  }
+
+  .bt-game-card{
+    grid-template-columns:50px 1fr auto;
+    gap:10px;
+    padding:10px;
+  }
+
+  .bt-game-icon{
+    width:50px;
+    height:50px;
+    border-radius:16px;
+    font-size:26px;
   }
 }
 
