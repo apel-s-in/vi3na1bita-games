@@ -190,11 +190,9 @@ export class NetworkBridge {
   }
 
   async joinRoom({ roomId, roomSecret }) {
-    const guestPeerId = makeId('guest');
     const res = await this._req('room_join', {
       roomId,
-      roomSecret,
-      peerId: guestPeerId
+      roomSecret
     });
 
     this.role = 'guest';
