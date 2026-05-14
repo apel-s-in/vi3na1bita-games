@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-14 18:16:26 UTC
+Сгенерировано: 2026-05-14 18:44:04 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -526,9 +526,9 @@ try {
             <span>🏆</span>
             <b>Турниры</b>
           </button>
-          <button class="bt-nav-item" type="button" data-door="nav:rating" aria-label="Рейтинг">
-            <span>▥</span>
-            <b>Рейтинг</b>
+          <button class="bt-nav-item" type="button" data-door="nav:friends" aria-label="Друзья">
+            <span>👥</span>
+            <b>Друзья</b>
           </button>
           <button class="bt-nav-item" type="button" data-door="nav:profile" aria-label="Профиль">
             <span>●</span>
