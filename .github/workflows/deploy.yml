@@ -56,3 +56,8 @@ jobs:
             --only-show-errors \
             --cache-control "public, max-age=300" \
             --content-type "application/javascript; charset=utf-8"
+
+          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./common/network-bridge.js "s3://$BUCKET/$PREFIX/common/network-bridge.js" \
+            --only-show-errors \
+            --cache-control "public, max-age=120" \
+            --content-type "application/javascript; charset=utf-8"
