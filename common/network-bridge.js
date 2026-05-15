@@ -62,6 +62,7 @@ export class NetworkBridge {
     this.pollTimer = 0;
     this.heartbeatTimer = 0;
     this.audioStream = null;
+    this.audioSender = null;
     this.remoteAudio = null;
     this.pendingIce = [];
     this.connected = false;
@@ -211,10 +212,10 @@ export class NetworkBridge {
   }
 
   buildJoinUrl() {
-    const u = new URL('/Games/war_hearts/', window.location.origin);
+    const u = new URL('/', window.location.origin);
+    u.searchParams.set('gcGame', this.gameId);
     u.searchParams.set('room', this.roomId);
     u.searchParams.set('key', this.roomSecret);
-    u.searchParams.set('game', this.gameId);
     return u.toString();
   }
 
@@ -226,6 +227,15 @@ export class NetworkBridge {
       ],
       iceCandidatePoolSize: 4
     });
+
+    try {
+      const transceiver = this.peer.addTransceiver('audio', {
+        direction: 'sendrecv'
+      });
+      this.audioSender = transceiver.sender;
+    } catch {
+      this.audioSender = null;
+    }
 
     this.peer.onicecandidate = e => {
       if (!e.candidate || !this.roomId || !this.remotePeerId) return;
@@ -456,37 +466,39 @@ export class NetworkBridge {
   async toggleVoice(enable) {
     if (!this.peer) return false;
 
-    if (enable) {
-      if (!this.audioStream) {
-        this.audioStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
-
-        this.audioStream.getAudioTracks().forEach(track => {
-          track.enabled = true;
-          this.peer.addTrack(track, this.audioStream);
-        });
-      } else {
-        this.audioStream.getAudioTracks().forEach(track => {
-          track.enabled = true;
-        });
-      }
-
-      this.send({ type: 'VOICE_STATE', payload: { active: true }, at: Date.now() });
-      return true;
-    }
-
-    if (this.audioStream) {
-      this.audioStream.getAudioTracks().forEach(track => {
-        track.enabled = false;
+    if (!this.audioStream) {
+      this.audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
       });
+
+      const track = this.audioStream.getAudioTracks()[0];
+      if (track) {
+        track.enabled = false;
+        if (this.audioSender?.replaceTrack) {
+          await this.audioSender.replaceTrack(track);
+        } else {
+          this.peer.addTrack(track, this.audioStream);
+        }
+      }
     }
 
-    this.send({ type: 'VOICE_STATE', payload: { active: false }, at: Date.now() });
+    const track = this.audioStream.getAudioTracks()[0];
+    if (track) track.enabled = !!enable;
+
+    try {
+      await this.remoteAudio?.play?.();
+    } catch {}
+
+    this.send({
+      type: 'VOICE_STATE',
+      payload: { active: !!enable },
+      at: Date.now()
+    });
+
     return true;
   }
 
