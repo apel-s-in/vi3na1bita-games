@@ -153,7 +153,7 @@
       gameHost.hidden = true;
       gameHost.innerHTML = '';
     }
-    openArena();
+    closePanel(); // Закрываем все панели, чтобы оказаться в главном виде Башни
     fitWorld();
   };
 
