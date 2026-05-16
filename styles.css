@@ -332,6 +332,11 @@ body[data-mode="play"] .bt-nav{
   color:#fff;
 }
 
+.bt-nav-item.is-active{
+  color:#fff;
+  background:linear-gradient(180deg,rgba(255,49,89,.22),rgba(255,49,89,.05));
+}
+
 .bt-bridge-pill{
   position:absolute;
   right:8px;
