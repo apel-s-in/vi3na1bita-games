@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-16 15:03:02 UTC
+Сгенерировано: 2026-05-16 15:03:52 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -580,13 +580,12 @@ Important:
   const state = {
     bridgeId: '',
     snapshot: null,
-    mode: 'lobby',
+    mode: 'play',
     screen: 'tower',
     touchY: 0
   };
 
   const isStandalone = () => window.parent === window;
-  const isLobby = () => state.mode !== 'play';
 
   const send = (type, payload = {}) => {
     if (!state.bridgeId || isStandalone()) return false;
@@ -620,11 +619,6 @@ Important:
   const setBridgeLabel = text => {
     const el = $('bridge-pill');
     if (el) el.textContent = text;
-  };
-
-  const setMode = mode => {
-    state.mode = mode === 'play' ? 'play' : 'lobby';
-    document.body.dataset.mode = state.mode;
   };
 
   const fitWorld = () => {
@@ -662,56 +656,46 @@ Important:
     }
   };
 
-  const requestGameFullscreen = async () => {
-    const scene = $('scene');
-    if (!scene || !scene.requestFullscreen) return false;
-    try {
-      await scene.requestFullscreen();
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const exitGameFullscreen = async () => {
-    if (!document.fullscreenElement || !document.exitFullscreen) return false;
-    try {
-      await document.exitFullscreen();
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const enterGame = async () => {
-    setMode('play');
-    showToast('Башня открыта');
-    send('GC_DOOR_CLICKED', { door: 'enter_game', at: Date.now() });
-    await requestGameFullscreen();
-    fitWorld();
-  };
-
   const exitGame = async () => {
-    showToast('Выход из Башни');
+    showToast('Выход в основное приложение');
     closePanel();
     send('GC_CLOSE', { reason: 'user_exit', at: Date.now() });
-    await exitGameFullscreen();
-    setMode('lobby');
     fitWorld();
+  };
+
+  const switchTab = tab => {
+    closePanel();
+    document.querySelectorAll('.bt-nav-item').forEach(btn => btn.classList.remove('is-active'));
+    
+    const bgImg = $('bg-image');
+    const titleH1 = document.querySelector('.bt-title h1');
+    const hotspots = document.querySelectorAll('.bt-hotspot');
+
+    if (tab === 'friends') {
+      $('nav-friends')?.classList.add('is-active');
+      if (titleH1) titleH1.textContent = 'Витрина Друзей';
+      if (bgImg) bgImg.src = './assets/tower/bg1.webp';
+      hotspots.forEach(h => h.style.display = 'none');
+    } else {
+      $('nav-tower')?.classList.add('is-active');
+      if (titleH1) titleH1.textContent = 'Башня Витрины';
+      if (bgImg) bgImg.src = './assets/tower/bg.webp';
+      hotspots.forEach(h => h.style.display = '');
+    }
   };
 
   const getPanel = () => {
     let panel = $('bt-panel');
     if (panel) return panel;
 
-    const world = $('world');
-    if (!world) return null;
+    const scene = $('scene');
+    if (!scene) return null;
 
     panel = document.createElement('section');
     panel.className = 'bt-panel';
     panel.id = 'bt-panel';
     panel.hidden = true;
-    world.appendChild(panel);
+    scene.appendChild(panel);
 
     return panel;
   };
@@ -745,8 +729,8 @@ Important:
   const openGame = gameId => {
     if (gameId !== 'war_hearts') return;
 
-    const world = $('world');
-    if (!world) return;
+    const scene = $('scene');
+    if (!scene) return;
 
     const panel = $('bt-panel');
     if (panel) panel.hidden = true;
@@ -756,7 +740,7 @@ Important:
       gameHost = document.createElement('section');
       gameHost.className = 'bt-game-host';
       gameHost.id = 'bt-game-host';
-      world.appendChild(gameHost);
+      scene.appendChild(gameHost);
     }
 
     const launchUrl = new URL('./war_hearts/', window.location.href);
@@ -773,7 +757,7 @@ Important:
     gameHost.hidden = false;
     gameHost.innerHTML = `
       <div class="bt-game-host-bar">
-        <button class="bt-game-host-back" type="button" data-game-close aria-label="Назад">‹</button>
+        <button class="bt-game-host-back" type="button" data-game-close aria-label="Закрыть">✕</button>
         <div>
           <b>Война Сердец</b>
           <small>Арена Турниров</small>
@@ -804,7 +788,7 @@ Important:
     panel.hidden = false;
     panel.innerHTML = `
       <div class="bt-panel-head">
-        <button class="bt-panel-back" type="button" data-panel-close aria-label="Назад">‹</button>
+        <button class="bt-panel-back" type="button" data-panel-close aria-label="Закрыть">✕</button>
         <div>
           <h2>Арена Турниров</h2>
           <p>Выберите игру для дуэли или тренировки</p>
@@ -883,48 +867,36 @@ Important:
     if (!scene) return;
 
     scene.addEventListener('wheel', e => {
-      if (!isLobby()) return;
       send('GC_PARENT_SCROLL', { deltaY: e.deltaY, at: Date.now() });
     }, { passive: true });
 
-    // На мобильных touch-scroll внутри iframe вызывает рывки родительской страницы.
-    // Поэтому жесты по Башне не прокидываем наверх: родитель можно скроллить вне iframe.
     scene.addEventListener('touchstart', e => {
       state.touchY = e.touches?.[0]?.clientY || 0;
     }, { passive: true });
   };
 
   const bindHotspots = () => {
-    $('enter-game')?.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      enterGame();
+    $('exit-game')?.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      exitGame();
     });
 
-    $('exit-game')?.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      exitGame();
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        switchTab(btn.dataset.tab);
+      });
     });
 
     document.querySelectorAll('[data-door]').forEach(btn => {
       btn.addEventListener('click', e => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (isLobby()) return;
+        e.preventDefault(); e.stopPropagation();
 
         const door = btn.dataset.door || 'unknown';
         const label = btn.getAttribute('aria-label') || door;
 
-        if (door === 'arena' || door === 'nav:tournaments') {
+        if (door === 'arena') {
           openArena();
-          return;
-        }
-
-        if (door === 'nav:friends') {
-          showToast('Друзья: скоро появятся');
-          send('GC_DOOR_CLICKED', { door, at: Date.now() });
           return;
         }
 
@@ -935,7 +907,7 @@ Important:
   };
 
   const init = () => {
-    setMode('lobby');
+    document.body.dataset.mode = 'play';
     fitWorld();
     bindBridge();
     bindHotspots();
@@ -947,7 +919,6 @@ Important:
       launchParams.get('room') &&
       (launchParams.get('key') || launchParams.get('secret'))
     ) {
-      setMode('play');
       setTimeout(() => openGame('war_hearts'), 120);
     }
 
@@ -959,12 +930,6 @@ Important:
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) fitWorld();
-    });
-
-    document.addEventListener('fullscreenchange', () => {
-      if (!document.fullscreenElement && state.mode === 'play') {
-        fitWorld();
-      }
     });
 
     const img = $('bg-image');
