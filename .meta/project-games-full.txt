@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-16 18:10:40 UTC
+Сгенерировано: 2026-05-16 18:41:11 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -721,7 +721,7 @@ Important:
       gameHost.hidden = true;
       gameHost.innerHTML = '';
     }
-    openArena();
+    closePanel(); // Закрываем все панели, чтобы оказаться в главном виде Башни
     fitWorld();
   };
 
