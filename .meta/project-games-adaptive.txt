@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-16 18:06:49 UTC
+Сгенерировано: 2026-05-16 18:08:46 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -485,18 +485,18 @@ try {
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07091a">
-  <title>Башня Витрины · Game Center</title>
+  <title>Башня · Game Center</title>
   <meta name="description" content="Музыкальный игровой центр Витрина Разбита">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body data-mode="play">
   <main class="bt-app" id="app">
-    <section class="bt-scene" id="scene" aria-label="Башня Витрины">
+    <section class="bt-scene" id="scene" aria-label="Башня">
       
       <!-- Верхнее меню теперь привязано к экрану, а не к картинке башни -->
       <header class="bt-topbar" aria-label="Профиль Game Center">
         <div class="bt-title">
-          <h1>Башня Витрины</h1>
+          <h1>Башня</h1>
         </div>
         <div class="bt-profile">
           <div class="bt-shards">
@@ -510,7 +510,7 @@ try {
 
       <!-- Мир (сама картинка и кликабельные зоны) -->
       <div class="bt-world" id="world">
-        <img class="bt-bg" id="bg-image" src="./assets/tower/bg.webp" alt="Башня Витрины" decoding="async" fetchpriority="high">
+        <img class="bt-bg" id="bg-image" src="./assets/tower/bg.webp" alt="Башня" decoding="async" fetchpriority="high">
 
         <button class="bt-hotspot hotspot-melody" type="button" data-door="melody" aria-label="Зал Мелодий"></button>
         <button class="bt-hotspot hotspot-words" type="button" data-door="words" aria-label="Кузница Слов"></button>
