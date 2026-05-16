@@ -104,12 +104,12 @@
 
     if (tab === 'friends') {
       $('nav-friends')?.classList.add('is-active');
-      if (titleH1) titleH1.textContent = 'Витрина Друзей';
+      if (titleH1) titleH1.textContent = 'Друзья';
       if (bgImg) bgImg.src = './assets/tower/bg1.webp';
       hotspots.forEach(h => h.style.display = 'none');
     } else {
       $('nav-tower')?.classList.add('is-active');
-      if (titleH1) titleH1.textContent = 'Башня Витрины';
+      if (titleH1) titleH1.textContent = 'Башня';
       if (bgImg) bgImg.src = './assets/tower/bg.webp';
       hotspots.forEach(h => h.style.display = '');
     }
@@ -186,14 +186,8 @@
     const safeLaunchUrl = launchUrl.toString().replace(/"/g, '&quot;');
 
     gameHost.hidden = false;
+    // Оставляем только iframe во весь экран. Сама игра нарисует свою шапку и крестик.
     gameHost.innerHTML = `
-      <div class="bt-game-host-bar">
-        <button class="bt-game-host-back" type="button" data-game-close aria-label="Закрыть">✕</button>
-        <div>
-          <b>Война Сердец</b>
-          <small>Арена Турниров</small>
-        </div>
-      </div>
       <iframe
         class="bt-game-frame"
         title="Война Сердец"
@@ -203,8 +197,6 @@
         referrerpolicy="no-referrer"
       ></iframe>
     `;
-
-    gameHost.querySelector('[data-game-close]')?.addEventListener('click', closeGameHost);
 
     showToast('Открываем Войну Сердец');
     send('GC_DOOR_CLICKED', { door: 'arena:war_hearts', at: Date.now() });
@@ -339,6 +331,14 @@
 
   const init = () => {
     document.body.dataset.mode = 'play';
+    
+    // Слушаем сигнал закрытия от внутренней игры (Война Сердец)
+    window.addEventListener('message', e => {
+      if (e.data?.kind === 'vitrina:game' && e.data?.type === 'GC_CLOSE') {
+        closeGameHost();
+      }
+    });
+
     fitWorld();
     bindBridge();
     bindHotspots();
