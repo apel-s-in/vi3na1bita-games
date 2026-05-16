@@ -48,6 +48,7 @@ vi3na1bita-games/
 ├── assets/
 │   └── tower/
 │       ├── bg.webp
+│       ├── bg1.webp
 │       └── tower.webp
 ├── common/
 │   └── network-bridge.js
@@ -60,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-16 13:43:49 UTC
+Сгенерировано: 2026-05-16 13:44:56 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
