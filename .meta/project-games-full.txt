@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-16 15:03:52 UTC
+Сгенерировано: 2026-05-16 15:48:35 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -496,8 +496,7 @@ try {
       <!-- Верхнее меню теперь привязано к экрану, а не к картинке башни -->
       <header class="bt-topbar" aria-label="Профиль Game Center">
         <div class="bt-title">
-          <h1>Башня Витрины</h1>
-          <p>Музыкальный игровой центр</p>
+          <h1>Башня</h1>
         </div>
         <div class="bt-profile">
           <div class="bt-shards">
