@@ -9,30 +9,29 @@
   <meta name="description" content="Музыкальный игровой центр Витрина Разбита">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body data-mode="lobby">
+<body data-mode="play">
   <main class="bt-app" id="app">
     <section class="bt-scene" id="scene" aria-label="Башня Витрины">
+      
+      <!-- Верхнее меню теперь привязано к экрану, а не к картинке башни -->
+      <header class="bt-topbar" aria-label="Профиль Game Center">
+        <div class="bt-title">
+          <h1>Башня Витрины</h1>
+          <p>Музыкальный игровой центр</p>
+        </div>
+        <div class="bt-profile">
+          <div class="bt-shards">
+            <span class="bt-shard-icon">♦</span>
+            <b id="shards-count">1250</b>
+            <small>осколков</small>
+          </div>
+          <div class="bt-avatar" id="avatar-box">👤</div>
+        </div>
+      </header>
+
+      <!-- Мир (сама картинка и кликабельные зоны) -->
       <div class="bt-world" id="world">
         <img class="bt-bg" id="bg-image" src="./assets/tower/bg.webp" alt="Башня Витрины" decoding="async" fetchpriority="high">
-
-        <header class="bt-topbar" aria-label="Профиль Game Center">
-          <div class="bt-title">
-            <h1>Башня Витрины</h1>
-            <p>Музыкальный игровой центр</p>
-          </div>
-          <div class="bt-profile">
-            <div class="bt-shards">
-              <span class="bt-shard-icon">♦</span>
-              <b id="shards-count">1250</b>
-              <small>осколков</small>
-            </div>
-            <div class="bt-avatar" id="avatar-box">👤</div>
-          </div>
-        </header>
-
-        <button class="bt-enter-game" type="button" id="enter-game">
-          <span>Войти</span>
-        </button>
 
         <button class="bt-hotspot hotspot-melody" type="button" data-door="melody" aria-label="Зал Мелодий"></button>
         <button class="bt-hotspot hotspot-words" type="button" data-door="words" aria-label="Кузница Слов"></button>
@@ -43,26 +42,27 @@
         <button class="bt-hotspot hotspot-daily" type="button" data-door="daily" aria-label="Ежедневный вызов"></button>
         <button class="bt-hotspot hotspot-chest" type="button" data-door="chest" aria-label="Сундук Осколков"></button>
         <button class="bt-hotspot hotspot-collection" type="button" data-door="collection" aria-label="Коллекция"></button>
-
-        <footer class="bt-nav" aria-label="Навигация Game Center">
-          <button class="bt-nav-item nav-exit" type="button" id="exit-game" aria-label="Выход">
-            <span>↩</span>
-            <b>Выход</b>
-          </button>
-          <button class="bt-nav-item" type="button" data-door="nav:tournaments" aria-label="Турниры">
-            <span>🏆</span>
-            <b>Турниры</b>
-          </button>
-          <button class="bt-nav-item" type="button" data-door="nav:friends" aria-label="Друзья">
-            <span>👥</span>
-            <b>Друзья</b>
-          </button>
-          <button class="bt-nav-item" type="button" data-door="nav:profile" aria-label="Профиль">
-            <span>●</span>
-            <b>Профиль</b>
-          </button>
-        </footer>
       </div>
+
+      <!-- Нижнее меню привязано к низу экрана -->
+      <footer class="bt-nav" aria-label="Навигация Game Center">
+        <button class="bt-nav-item nav-exit" type="button" id="exit-game" aria-label="Выход">
+          <span>↩</span>
+          <b>Выход</b>
+        </button>
+        <button class="bt-nav-item is-active" type="button" data-tab="tower" id="nav-tower" aria-label="Башня">
+          <span>🏰</span>
+          <b>Башня</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-tab="friends" id="nav-friends" aria-label="Друзья">
+          <span>👥</span>
+          <b>Друзья</b>
+        </button>
+        <button class="bt-nav-item" type="button" data-door="nav:profile" aria-label="Профиль">
+          <span>●</span>
+          <b>Профиль</b>
+        </button>
+      </footer>
 
       <div class="bt-bridge-pill" id="bridge-pill">bridge: wait</div>
       <div class="bt-toast" id="toast" hidden></div>
