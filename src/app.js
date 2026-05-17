@@ -272,6 +272,8 @@
 
       if (d.type === 'GC_SNAPSHOT' || d.type === 'GC_HOST_STATE') {
         applySnapshot(d.payload);
+        const gameIframe = document.querySelector('.bt-game-frame');
+        if (gameIframe) gameIframe.contentWindow.postMessage({ kind: 'vitrina:game-host', type: 'GC_SNAPSHOT', payload: d.payload }, '*');
       }
     });
 
@@ -332,10 +334,15 @@
   const init = () => {
     document.body.dataset.mode = 'play';
     
-    // Слушаем сигнал закрытия от внутренней игры (Война Сердец)
+    // Слушаем сигналы от внутренней игры (Война Сердец)
     window.addEventListener('message', e => {
-      if (e.data?.kind === 'vitrina:game' && e.data?.type === 'GC_CLOSE') {
-        closeGameHost();
+      if (e.data?.kind === 'vitrina:game') {
+        if (e.data.type === 'GC_CLOSE') closeGameHost();
+        else if (e.data.type === 'GC_SAVE_DATA') send('GC_SAVE_DATA', e.data.payload);
+        else if (e.data.type === 'GC_READY' && state.snapshot) {
+          const gameIframe = document.querySelector('.bt-game-frame');
+          if (gameIframe) gameIframe.contentWindow.postMessage({ kind: 'vitrina:game-host', type: 'GC_SNAPSHOT', payload: state.snapshot }, '*');
+        }
       }
     });
 
