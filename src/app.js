@@ -338,6 +338,7 @@
     window.addEventListener('message', e => {
       if (e.data?.kind === 'vitrina:game') {
         if (e.data.type === 'GC_CLOSE') closeGameHost();
+        else if (e.data.type === 'GC_COLLAPSE_GAME') send('GC_COLLAPSE_GAME', e.data.payload);
         else if (e.data.type === 'GC_SAVE_DATA') send('GC_SAVE_DATA', e.data.payload);
         else if (e.data.type === 'GC_READY' && state.snapshot) {
           const gameIframe = document.querySelector('.bt-game-frame');
