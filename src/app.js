@@ -241,22 +241,27 @@
     `;
 
     const frame = gameHost.querySelector('.bt-game-frame');
-    frame?.addEventListener('load', () => {
+    const postToGame = () => {
       try {
-        frame.contentWindow?.postMessage({
+        frame?.contentWindow?.postMessage({
           kind: 'vitrina:game-host',
           type: 'GC_RESTORE_GAME',
           payload: { gameId: game.id, at: Date.now() }
         }, '*');
 
         if (state.snapshot) {
-          frame.contentWindow?.postMessage({
+          frame?.contentWindow?.postMessage({
             kind: 'vitrina:game-host',
             type: 'GC_SNAPSHOT',
             payload: state.snapshot
           }, '*');
         }
       } catch {}
+    };
+
+    frame?.addEventListener('load', () => {
+      postToGame();
+      setTimeout(postToGame, 160);
     }, { once: true });
 
     showToast(`Открываем ${game.title}`);
@@ -275,9 +280,13 @@
 
       if (frame) {
         const panel = $('bt-panel');
-        if (panel) panel.hidden = true;
+        if (panel) {
+          panel.hidden = true;
+          panel.innerHTML = '';
+        }
 
         gameHost.hidden = false;
+        gameHost.style.display = '';
         document.body.dataset.mode = 'play';
         state.screen = 'game';
         if (activeId) {
@@ -312,6 +321,11 @@
 
     if (activeId && GAME_REGISTRY[activeId]) {
       openGame(activeId);
+      return;
+    }
+
+    if (GAME_REGISTRY.war_hearts) {
+      openGame('war_hearts');
       return;
     }
 
@@ -376,15 +390,23 @@
       if (d.kind !== 'vitrina:game-host') return;
 
       if (d.type === 'GC_INIT') {
-        state.bridgeId = d.bridgeId || d.payload?.bridgeId || '';
+        state.bridgeId = d.bridgeId || d.payload?.bridgeId || state.bridgeId || '';
         setBridgeLabel(state.bridgeId ? 'bridge: connected' : 'bridge: no id');
         applySnapshot(d.payload?.snapshot);
         send('GC_READY', { at: Date.now(), userAgent: navigator.userAgent.slice(0, 80) });
         send('GC_REQUEST_SNAPSHOT');
+
+        if (d.payload?.gameId) restoreActiveGame(d.payload.gameId);
         return;
       }
 
-      if (!state.bridgeId || d.bridgeId !== state.bridgeId) return;
+      // После iOS/Safari restore JS-state мог сброситься. Если пришёл новый bridgeId — принимаем его.
+      if (!state.bridgeId && d.bridgeId) {
+        state.bridgeId = d.bridgeId;
+        setBridgeLabel('bridge: restored');
+      }
+
+      if (state.bridgeId && d.bridgeId && d.bridgeId !== state.bridgeId) return;
 
       if (d.type === 'GC_SNAPSHOT' || d.type === 'GC_HOST_STATE') {
         applySnapshot(d.payload);
@@ -400,7 +422,7 @@
       }
 
       if (d.type === 'GC_RESTORE_GAME') {
-        restoreActiveGame(d.payload?.gameId || '');
+        restoreActiveGame(d.payload?.gameId || state.activeGameId || 'war_hearts');
         return;
       }
     });
