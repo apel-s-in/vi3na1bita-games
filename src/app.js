@@ -240,14 +240,33 @@
       ></iframe>
     `;
 
+    const frame = gameHost.querySelector('.bt-game-frame');
+    frame?.addEventListener('load', () => {
+      try {
+        frame.contentWindow?.postMessage({
+          kind: 'vitrina:game-host',
+          type: 'GC_RESTORE_GAME',
+          payload: { gameId: game.id, at: Date.now() }
+        }, '*');
+
+        if (state.snapshot) {
+          frame.contentWindow?.postMessage({
+            kind: 'vitrina:game-host',
+            type: 'GC_SNAPSHOT',
+            payload: state.snapshot
+          }, '*');
+        }
+      } catch {}
+    }, { once: true });
+
     showToast(`Открываем ${game.title}`);
     send('GC_DOOR_CLICKED', { door: game.door || game.id, gameId: game.id, at: Date.now() });
     fitWorld();
   };
 
-  const restoreActiveGame = () => {
+  const restoreActiveGame = preferredGameId => {
     const gameHost = $('bt-game-host');
-    const activeId = state.activeGameId || gameHost?.dataset?.gameId || '';
+    const activeId = preferredGameId || state.activeGameId || gameHost?.dataset?.gameId || '';
 
     if (gameHost) {
       const frame = activeId
@@ -259,8 +278,12 @@
         if (panel) panel.hidden = true;
 
         gameHost.hidden = false;
+        document.body.dataset.mode = 'play';
         state.screen = 'game';
-        if (activeId) state.activeGameId = activeId;
+        if (activeId) {
+          state.activeGameId = activeId;
+          gameHost.dataset.gameId = activeId;
+        }
 
         showToast('Возвращаемся в игру');
 
@@ -377,7 +400,7 @@
       }
 
       if (d.type === 'GC_RESTORE_GAME') {
-        restoreActiveGame();
+        restoreActiveGame(d.payload?.gameId || '');
         return;
       }
     });
@@ -473,12 +496,22 @@
         state.screen = 'game';
         if (gameId) state.activeGameId = gameId;
 
-        if (state.snapshot && gameIframe) {
-          gameIframe.contentWindow.postMessage({
-            kind: 'vitrina:game-host',
-            type: 'GC_SNAPSHOT',
-            payload: state.snapshot
-          }, '*');
+        if (gameIframe) {
+          if (d.type === 'GC_READY') {
+            gameIframe.contentWindow.postMessage({
+              kind: 'vitrina:game-host',
+              type: 'GC_RESTORE_GAME',
+              payload: { gameId: state.activeGameId, at: Date.now() }
+            }, '*');
+          }
+
+          if (state.snapshot) {
+            gameIframe.contentWindow.postMessage({
+              kind: 'vitrina:game-host',
+              type: 'GC_SNAPSHOT',
+              payload: state.snapshot
+            }, '*');
+          }
         }
       }
     });
