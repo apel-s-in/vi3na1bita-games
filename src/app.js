@@ -8,6 +8,16 @@
 
   const $ = id => document.getElementById(id);
 
+  const GAME_REGISTRY = {
+    war_hearts: {
+      id: 'war_hearts',
+      title: 'Война Сердец',
+      path: './war_hearts/',
+      door: 'arena:war_hearts',
+      allow: 'fullscreen; microphone'
+    }
+  };
+
   const state = {
     bridgeId: '',
     snapshot: null,
@@ -139,11 +149,9 @@
       panel.innerHTML = '';
     }
 
+    // ВАЖНО: активную игру не уничтожаем. Только скрываем, чтобы iframe жил в памяти.
     const gameHost = $('bt-game-host');
-    if (gameHost) {
-      gameHost.hidden = true;
-      gameHost.innerHTML = '';
-    }
+    if (gameHost) gameHost.hidden = true;
 
     state.screen = 'tower';
   };
@@ -154,12 +162,22 @@
       gameHost.hidden = true;
       gameHost.innerHTML = '';
     }
-    closePanel(); // Закрываем все панели, чтобы оказаться в главном виде Башни
+
+    state.activeGameId = '';
+    state.screen = 'tower';
+
+    const panel = $('bt-panel');
+    if (panel) {
+      panel.hidden = true;
+      panel.innerHTML = '';
+    }
+
     fitWorld();
   };
 
   const openGame = gameId => {
-    if (gameId !== 'war_hearts') return;
+    const game = GAME_REGISTRY[gameId];
+    if (!game) return;
 
     const scene = $('scene');
     if (!scene) return;
@@ -176,27 +194,28 @@
     }
 
     state.screen = 'game';
-    state.activeGameId = gameId;
+    state.activeGameId = game.id;
+    gameHost.dataset.gameId = game.id;
     gameHost.hidden = false;
 
-    // Если iframe уже жив — не пересоздаём. Так сохраняется бой, поле, чат и текущий экран.
-    const existingFrame = gameHost.querySelector('.bt-game-frame');
+    // Если iframe этой игры уже жив — не пересоздаём.
+    const existingFrame = gameHost.querySelector(`.bt-game-frame[data-game-id="${game.id}"]`);
     if (existingFrame) {
-      showToast('Возвращаем Войну Сердец');
+      showToast(`Возвращаем ${game.title}`);
       fitWorld();
 
       try {
         existingFrame.contentWindow?.postMessage({
           kind: 'vitrina:game-host',
           type: 'GC_RESTORE_GAME',
-          payload: { at: Date.now() }
+          payload: { gameId: game.id, at: Date.now() }
         }, '*');
       } catch {}
 
       return;
     }
 
-    const launchUrl = new URL('./war_hearts/', window.location.href);
+    const launchUrl = new URL(game.path, window.location.href);
     const params = new URLSearchParams(window.location.search);
 
     launchUrl.searchParams.set('host', 'game_center');
@@ -206,21 +225,74 @@
     if (params.get('secret')) launchUrl.searchParams.set('key', params.get('secret'));
 
     const safeLaunchUrl = launchUrl.toString().replace(/"/g, '&quot;');
+    const safeTitle = game.title.replace(/"/g, '&quot;');
+    const safeGameId = game.id.replace(/"/g, '&quot;');
 
-    // Оставляем только iframe во весь экран. Сама игра нарисует свою шапку и крестик.
     gameHost.innerHTML = `
       <iframe
         class="bt-game-frame"
-        title="Война Сердец"
+        data-game-id="${safeGameId}"
+        title="${safeTitle}"
         src="${safeLaunchUrl}"
-        allow="fullscreen; microphone"
+        allow="${game.allow || 'fullscreen'}"
         allowfullscreen
         referrerpolicy="no-referrer"
       ></iframe>
     `;
 
-    showToast('Открываем Войну Сердец');
-    send('GC_DOOR_CLICKED', { door: 'arena:war_hearts', at: Date.now() });
+    showToast(`Открываем ${game.title}`);
+    send('GC_DOOR_CLICKED', { door: game.door || game.id, gameId: game.id, at: Date.now() });
+    fitWorld();
+  };
+
+  const restoreActiveGame = () => {
+    const gameHost = $('bt-game-host');
+    const activeId = state.activeGameId || gameHost?.dataset?.gameId || '';
+
+    if (gameHost) {
+      const frame = activeId
+        ? gameHost.querySelector(`.bt-game-frame[data-game-id="${activeId}"]`)
+        : gameHost.querySelector('.bt-game-frame');
+
+      if (frame) {
+        const panel = $('bt-panel');
+        if (panel) panel.hidden = true;
+
+        gameHost.hidden = false;
+        state.screen = 'game';
+        if (activeId) state.activeGameId = activeId;
+
+        showToast('Возвращаемся в игру');
+
+        try {
+          frame.contentWindow?.postMessage({
+            kind: 'vitrina:game-host',
+            type: 'GC_RESTORE_GAME',
+            payload: { gameId: activeId, at: Date.now() }
+          }, '*');
+        } catch {}
+
+        if (state.snapshot) {
+          try {
+            frame.contentWindow?.postMessage({
+              kind: 'vitrina:game-host',
+              type: 'GC_SNAPSHOT',
+              payload: state.snapshot
+            }, '*');
+          } catch {}
+        }
+
+        fitWorld();
+        return;
+      }
+    }
+
+    if (activeId && GAME_REGISTRY[activeId]) {
+      openGame(activeId);
+      return;
+    }
+
+    state.screen = 'tower';
     fitWorld();
   };
 
@@ -294,7 +366,19 @@
       if (d.type === 'GC_SNAPSHOT' || d.type === 'GC_HOST_STATE') {
         applySnapshot(d.payload);
         const gameIframe = document.querySelector('.bt-game-frame');
-        if (gameIframe) gameIframe.contentWindow.postMessage({ kind: 'vitrina:game-host', type: 'GC_SNAPSHOT', payload: d.payload }, '*');
+        if (gameIframe) {
+          gameIframe.contentWindow.postMessage({
+            kind: 'vitrina:game-host',
+            type: 'GC_SNAPSHOT',
+            payload: d.payload
+          }, '*');
+        }
+        return;
+      }
+
+      if (d.type === 'GC_RESTORE_GAME') {
+        restoreActiveGame();
+        return;
       }
     });
 
@@ -355,15 +439,46 @@
   const init = () => {
     document.body.dataset.mode = 'play';
     
-    // Слушаем сигналы от внутренней игры (Война Сердец)
+    // Слушаем сигналы от внутренней игры
     window.addEventListener('message', e => {
-      if (e.data?.kind === 'vitrina:game') {
-        if (e.data.type === 'GC_CLOSE') closeGameHost();
-        else if (e.data.type === 'GC_COLLAPSE_GAME') send('GC_COLLAPSE_GAME', e.data.payload);
-        else if (e.data.type === 'GC_SAVE_DATA') send('GC_SAVE_DATA', e.data.payload);
-        else if (e.data.type === 'GC_READY' && state.snapshot) {
-          const gameIframe = document.querySelector('.bt-game-frame');
-          if (gameIframe) gameIframe.contentWindow.postMessage({ kind: 'vitrina:game-host', type: 'GC_SNAPSHOT', payload: state.snapshot }, '*');
+      const d = e.data || {};
+      if (d.kind !== 'vitrina:game') return;
+
+      const gameIframe = document.querySelector('.bt-game-frame');
+      const gameId = d.gameId || d.payload?.gameId || gameIframe?.dataset?.gameId || state.activeGameId || '';
+
+      if (d.type === 'GC_CLOSE') {
+        closeGameHost();
+        return;
+      }
+
+      if (d.type === 'GC_COLLAPSE_GAME') {
+        state.screen = 'game';
+        if (gameId) state.activeGameId = gameId;
+
+        send('GC_COLLAPSE_GAME', {
+          ...(d.payload || {}),
+          gameId: state.activeGameId,
+          at: Date.now()
+        });
+        return;
+      }
+
+      if (d.type === 'GC_SAVE_DATA') {
+        send('GC_SAVE_DATA', d.payload);
+        return;
+      }
+
+      if (d.type === 'GC_READY' || d.type === 'GC_REQUEST_SNAPSHOT') {
+        state.screen = 'game';
+        if (gameId) state.activeGameId = gameId;
+
+        if (state.snapshot && gameIframe) {
+          gameIframe.contentWindow.postMessage({
+            kind: 'vitrina:game-host',
+            type: 'GC_SNAPSHOT',
+            payload: state.snapshot
+          }, '*');
         }
       }
     });
