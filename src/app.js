@@ -13,6 +13,7 @@
     snapshot: null,
     mode: 'play',
     screen: 'tower',
+    activeGameId: '',
     touchY: 0
   };
 
@@ -174,6 +175,27 @@
       scene.appendChild(gameHost);
     }
 
+    state.screen = 'game';
+    state.activeGameId = gameId;
+    gameHost.hidden = false;
+
+    // Если iframe уже жив — не пересоздаём. Так сохраняется бой, поле, чат и текущий экран.
+    const existingFrame = gameHost.querySelector('.bt-game-frame');
+    if (existingFrame) {
+      showToast('Возвращаем Войну Сердец');
+      fitWorld();
+
+      try {
+        existingFrame.contentWindow?.postMessage({
+          kind: 'vitrina:game-host',
+          type: 'GC_RESTORE_GAME',
+          payload: { at: Date.now() }
+        }, '*');
+      } catch {}
+
+      return;
+    }
+
     const launchUrl = new URL('./war_hearts/', window.location.href);
     const params = new URLSearchParams(window.location.search);
 
@@ -185,7 +207,6 @@
 
     const safeLaunchUrl = launchUrl.toString().replace(/"/g, '&quot;');
 
-    gameHost.hidden = false;
     // Оставляем только iframe во весь экран. Сама игра нарисует свою шапку и крестик.
     gameHost.innerHTML = `
       <iframe
