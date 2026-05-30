@@ -212,7 +212,7 @@ export class NetworkBridge {
   }
 
   buildJoinUrl() {
-    const u = new URL('/', window.location.origin);
+    const u = new URL('/Games/', window.location.href);
     u.searchParams.set('gcGame', this.gameId);
     u.searchParams.set('room', this.roomId);
     u.searchParams.set('key', this.roomSecret);
