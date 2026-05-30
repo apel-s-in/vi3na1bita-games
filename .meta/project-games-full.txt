@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-28 16:12:55 UTC
+Сгенерировано: 2026-05-30 13:38:08 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2013,7 +2013,7 @@ export class NetworkBridge {
   }
 
   buildJoinUrl() {
-    const u = new URL('/', window.location.origin);
+    const u = new URL('/Games/', window.location.href);
     u.searchParams.set('gcGame', this.gameId);
     u.searchParams.set('room', this.roomId);
     u.searchParams.set('key', this.roomSecret);
