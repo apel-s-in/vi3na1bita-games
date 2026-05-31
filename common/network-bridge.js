@@ -427,12 +427,7 @@ export class NetworkBridge {
     this.role = 'host';
     this._initPeer();
 
-    const ch = this.peer.createDataChannel('game', {
-      ordered: true
-    });
-    this._bindDataChannel(ch);
-
-    await this._makeAndSendOffer('initial');
+    // В serverless-архитектуре хост просто ждет оффера от гостя
     this._startPolling(800);
     this._emitStatus('waiting', false);
 
@@ -448,6 +443,14 @@ export class NetworkBridge {
 
     this.role = 'guest';
     this._initPeer();
+    
+    // Гость создает канал и ПЕРВЫМ отправляет WebRTC Offer хосту
+    const ch = this.peer.createDataChannel('game', {
+      ordered: true
+    });
+    this._bindDataChannel(ch);
+    await this._makeAndSendOffer('initial');
+
     this._startPolling(800);
     this._emitStatus('connecting', false);
 
