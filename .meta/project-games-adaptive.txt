@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-30 13:38:08 UTC
+Сгенерировано: 2026-05-31 08:14:13 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1963,6 +1963,14 @@ export class NetworkBridge {
     return this._req('game_invite_poll', {
       gameId: this.gameId
     });
+  }
+
+  async submitMatchResult(resultData) {
+    return this._req('match_submit_result', resultData);
+  }
+
+  async getLeaderboard() {
+    return this._req('leaderboard_get', {});
   }
 
   async createRoom() {
