@@ -395,6 +395,7 @@ export class NetworkBridge {
           await this._handleSignal(msg);
         }
       } catch (err) {
+        this.stopPolling();
         this.onError(err);
       }
     }, intervalMs);
@@ -408,7 +409,15 @@ export class NetworkBridge {
   _startHeartbeat() {
     if (this.heartbeatTimer) return;
     this.heartbeatTimer = setInterval(() => {
-      if (!document.hidden) this.heartbeat().catch(() => {});
+      if (!document.hidden) {
+        this.heartbeat().catch((err) => {
+          if (err && err.status >= 500) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = 0;
+            this.onError(err);
+          }
+        });
+      }
     }, 25000);
   }
 
