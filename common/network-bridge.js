@@ -273,6 +273,7 @@ export class NetworkBridge {
 
     this.peer.onnegotiationneeded = async () => {
       if (this.closed || !this.peer || !this.remotePeerId || this.role !== 'host') return;
+      if (!this.connected) return; // Предотвращаем WebRTC glare: Хост не отправляет оффер до установки P2P соединения
       try {
         await this._makeAndSendOffer('renegotiate');
       } catch (err) {
