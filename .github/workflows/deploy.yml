@@ -17,47 +17,86 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Deploy repo root to /Games/
+      - name: Incremental deploy public files
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ru-central1
+          BEFORE_SHA: ${{ github.event.before }}
           BUCKET: vi3na1bita
           PREFIX: Games
         run: |
           set -euo pipefail
 
-          aws --endpoint-url=https://storage.yandexcloud.net s3 sync ./ "s3://$BUCKET/$PREFIX/" \
-            --delete \
-            --only-show-errors \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude ".meta/*" \
-            --exclude ".meta/**" \
-            --exclude ".DS_Store" \
-            --exclude "README.md" \
-            --exclude "ai-rules.txt" \
-            --exclude "generate-context.js" \
-            --exclude "war_hearts/*" \
-            --exclude "war_hearts/**"
+          is_public_file() {
+            case "$1" in
+              .git/*|.github/*|.meta/*|generate-context.js|ai-rules.txt|README.md|war_hearts/*) return 1 ;;
+              *) return 0 ;;
+            esac
+          }
 
-          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./index.html "s3://$BUCKET/$PREFIX/index.html" \
-            --only-show-errors \
-            --cache-control "no-cache, no-store, must-revalidate" \
-            --content-type "text/html; charset=utf-8"
+          upload_file() {
+            local f="$1"
+            [ -f "$f" ] || return 0
+            is_public_file "$f" || return 0
 
-          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./styles.css "s3://$BUCKET/$PREFIX/styles.css" \
-            --only-show-errors \
-            --cache-control "public, max-age=300" \
-            --content-type "text/css; charset=utf-8"
+            local ct="application/octet-stream"
+            local cc="public, max-age=300"
+            case "$f" in
+              *.html) ct="text/html; charset=utf-8"; cc="no-cache, no-store, must-revalidate" ;;
+              *.css) ct="text/css; charset=utf-8" ;;
+              *.js|*.mjs) ct="application/javascript; charset=utf-8"; cc="public, max-age=120" ;;
+              *.json) ct="application/json; charset=utf-8" ;;
+              *.svg) ct="image/svg+xml" ;;
+              *.webp|*.png|*.jpg) ct="image/${f##*.}"; cc="public, max-age=86400" ;;
+            esac
 
-          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./src/app.js "s3://$BUCKET/$PREFIX/src/app.js" \
-            --only-show-errors \
-            --cache-control "public, max-age=300" \
-            --content-type "application/javascript; charset=utf-8"
+            echo "PUT $f"
+            aws --endpoint-url=https://storage.yandexcloud.net s3 cp "$f" "s3://$BUCKET/$PREFIX/$f" \
+              --only-show-errors \
+              --cache-control "$cc" \
+              --content-type "$ct"
+          }
 
-          aws --endpoint-url=https://storage.yandexcloud.net s3 cp ./common/network-bridge.js "s3://$BUCKET/$PREFIX/common/network-bridge.js" \
-            --only-show-errors \
-            --cache-control "public, max-age=120" \
-            --content-type "application/javascript; charset=utf-8"
+          delete_file() {
+            local f="$1"
+            is_public_file "$f" || return 0
+            echo "DELETE $f"
+            aws --endpoint-url=https://storage.yandexcloud.net s3 rm "s3://$BUCKET/$PREFIX/$f" --only-show-errors || true
+          }
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -z "${BEFORE_SHA:-}" ] || [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "Manual/initial deploy: full sync (size-only)"
+            aws --endpoint-url=https://storage.yandexcloud.net s3 sync ./ "s3://$BUCKET/$PREFIX/" \
+              --delete --size-only --only-show-errors \
+              --exclude "*" \
+              --include "*.html" \
+              --include "*.css" \
+              --include "*.js" \
+              --include "*.json" \
+              --include "*.svg" \
+              --include "*.webp" \
+              --include "*.png" \
+              --include "*.jpg" \
+              --exclude ".git/*" \
+              --exclude ".github/*" \
+              --exclude ".meta/*" \
+              --exclude "generate-context.js" \
+              --exclude "ai-rules.txt" \
+              --exclude "README.md" \
+              --exclude "war_hearts/*" \
+              --exclude "war_hearts/**"
+            exit 0
+          fi
+
+          git diff --name-status "$BEFORE_SHA" "$GITHUB_SHA" | while IFS=$'\t' read -r status a b; do
+            file="${b:-$a}"
+            if [[ "$status" == D* ]]; then
+              delete_file "$a"
+            else
+              upload_file "$file"
+            fi
+          done
