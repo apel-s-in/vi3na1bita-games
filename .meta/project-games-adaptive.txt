@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-31 09:54:57 UTC
+Сгенерировано: 2026-05-31 11:01:09 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2288,12 +2288,7 @@ export class NetworkBridge {
     this.role = 'host';
     this._initPeer();
 
-    const ch = this.peer.createDataChannel('game', {
-      ordered: true
-    });
-    this._bindDataChannel(ch);
-
-    await this._makeAndSendOffer('initial');
+    // В serverless-архитектуре хост просто ждет оффера от гостя
     this._startPolling(800);
     this._emitStatus('waiting', false);
 
@@ -2309,6 +2304,14 @@ export class NetworkBridge {
 
     this.role = 'guest';
     this._initPeer();
+    
+    // Гость создает канал и ПЕРВЫМ отправляет WebRTC Offer хосту
+    const ch = this.peer.createDataChannel('game', {
+      ordered: true
+    });
+    this._bindDataChannel(ch);
+    await this._makeAndSendOffer('initial');
+
     this._startPolling(800);
     this._emitStatus('connecting', false);
 
