@@ -333,6 +333,61 @@
     fitWorld();
   };
 
+  const openFame = async () => {
+    const panel = getPanel();
+    if (!panel) return;
+
+    state.screen = 'fame';
+    panel.hidden = false;
+    panel.innerHTML = `
+      <div class="bt-panel-head">
+        <button class="bt-panel-back" type="button" data-panel-close aria-label="Закрыть">✕</button>
+        <div>
+          <h2>Зал Славы</h2>
+          <p>Лучшие игроки арены (рейтинг ELO)</p>
+        </div>
+      </div>
+      <div class="bt-games-list" id="fame-list">
+        <div style="text-align:center; padding: 20px; color: var(--bt-muted);">Загрузка рейтинга...</div>
+      </div>
+    `;
+
+    panel.querySelector('[data-panel-close]')?.addEventListener('click', closePanel);
+    send('GC_DOOR_CLICKED', { door: 'fame', at: Date.now() });
+
+    try {
+      const url = new URL('./common/network-bridge.js', window.location.href).href;
+      const { NetworkBridge } = await import(url);
+      const bridge = new NetworkBridge({ gameId: 'war_hearts', displayName: state.snapshot?.user?.displayName || 'Гость' });
+      const res = await bridge.getLeaderboard();
+      
+      const list = panel.querySelector('#fame-list');
+      if (!list) return;
+
+      if (!res.leaders?.length) {
+        list.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--bt-muted);">Пока нет сыгранных матчей. Будьте первыми!</div>`;
+        return;
+      }
+
+      list.innerHTML = res.leaders.map((p, i) => `
+        <div class="bt-game-card" style="min-height: 70px; grid-template-columns: 42px 1fr auto; padding: 10px;">
+          <div class="bt-game-icon" style="width:42px; height:42px; font-size:18px; border-radius:12px;">${
+            p.avatarUrl ? `<img src="${String(p.avatarUrl).replace(/"/g, '&quot;')}" style="width:100%;height:100%;border-radius:12px;object-fit:cover">` : (i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '👤')
+          }</div>
+          <div class="bt-game-info">
+            <h3 style="font-size: 15px; margin: 0 0 3px;">${i + 1}. ${String(p.displayName || 'Игрок').replace(/</g, '&lt;')}</h3>
+            <p style="font-size: 11px;">Побед: ${p.wins} / Боёв: ${p.matches}</p>
+          </div>
+          <div style="font-weight:900; color:#4daaff; font-size:16px; margin-left: 10px;">${p.rating}</div>
+        </div>
+      `).join('');
+
+    } catch (e) {
+      const list = panel.querySelector('#fame-list');
+      if (list) list.innerHTML = `<div style="text-align:center; padding: 20px; color: #ff3159;">Ошибка загрузки: ${e.message}</div>`;
+    }
+  };
+
   const openArena = () => {
     const panel = getPanel();
     if (!panel) return;
@@ -472,6 +527,11 @@
 
         if (door === 'arena') {
           openArena();
+          return;
+        }
+
+        if (door === 'fame') {
+          openFame();
           return;
         }
 
