@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-31 08:16:53 UTC
+Сгенерировано: 2026-05-31 09:54:57 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2256,6 +2256,7 @@ export class NetworkBridge {
           await this._handleSignal(msg);
         }
       } catch (err) {
+        this.stopPolling();
         this.onError(err);
       }
     }, intervalMs);
@@ -2269,7 +2270,15 @@ export class NetworkBridge {
   _startHeartbeat() {
     if (this.heartbeatTimer) return;
     this.heartbeatTimer = setInterval(() => {
-      if (!document.hidden) this.heartbeat().catch(() => {});
+      if (!document.hidden) {
+        this.heartbeat().catch((err) => {
+          if (err && err.status >= 500) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = 0;
+            this.onError(err);
+          }
+        });
+      }
     }, 25000);
   }
 
