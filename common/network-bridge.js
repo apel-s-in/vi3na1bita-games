@@ -164,6 +164,14 @@ export class NetworkBridge {
     });
   }
 
+  async submitMatchResult(resultData) {
+    return this._req('match_submit_result', resultData);
+  }
+
+  async getLeaderboard() {
+    return this._req('leaderboard_get', {});
+  }
+
   async createRoom() {
     const hostPeerId = makeId('host');
     const res = await this._req('room_create', {
