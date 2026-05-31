@@ -215,14 +215,22 @@
       return;
     }
 
-    const launchUrl = new URL(game.path, window.location.href);
-    const params = new URLSearchParams(window.location.search);
+      const launchUrl = new URL(game.path, window.location.href);
+      const params = new URLSearchParams(window.location.search);
+      
+      try {
+        const parentParams = new URLSearchParams(window.parent.location.search);
+        for (const [k, v] of parentParams.entries()) {
+          if (!params.has(k)) params.set(k, v);
+        }
+      } catch {}
 
-    launchUrl.searchParams.set('host', 'game_center');
+      launchUrl.searchParams.set('host', 'game_center');
 
-    if (params.get('room')) launchUrl.searchParams.set('room', params.get('room'));
-    if (params.get('key')) launchUrl.searchParams.set('key', params.get('key'));
-    if (params.get('secret')) launchUrl.searchParams.set('key', params.get('secret'));
+      if (params.get('room')) launchUrl.searchParams.set('room', params.get('room'));
+      if (params.get('key')) launchUrl.searchParams.set('key', params.get('key'));
+      if (params.get('secret')) launchUrl.searchParams.set('key', params.get('secret'));
+      if (params.get('inviteFriend')) launchUrl.searchParams.set('inviteFriend', params.get('inviteFriend'));
 
     const safeLaunchUrl = launchUrl.toString().replace(/"/g, '&quot;');
     const safeTitle = game.title.replace(/"/g, '&quot;');
@@ -604,12 +612,22 @@
     bindScrollProxy();
 
     const launchParams = new URLSearchParams(window.location.search);
+    try {
+      const parentParams = new URLSearchParams(window.parent.location.search);
+      for (const [k, v] of parentParams.entries()) {
+        if (!launchParams.has(k)) launchParams.set(k, v);
+      }
+    } catch {}
+
     if (
-      (launchParams.get('gcGame') === 'war_hearts' || launchParams.get('game') === 'war_hearts') &&
-      launchParams.get('room') &&
-      (launchParams.get('key') || launchParams.get('secret'))
+      launchParams.get('gcGame') === 'war_hearts' || launchParams.get('game') === 'war_hearts'
     ) {
-      setTimeout(() => openGame('war_hearts'), 120);
+      if (
+        (launchParams.get('room') && (launchParams.get('key') || launchParams.get('secret'))) ||
+        launchParams.get('inviteFriend')
+      ) {
+        setTimeout(() => openGame('war_hearts'), 120);
+      }
     }
 
     let resizeTimer = 0;
