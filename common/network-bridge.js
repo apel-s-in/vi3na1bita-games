@@ -572,6 +572,7 @@ export class NetworkBridge {
   }
 
   async connectAsHost() {
+    this.closed = false;
     if (!this.roomId) await this.createRoom();
 
     this.role = 'host';
@@ -589,6 +590,7 @@ export class NetworkBridge {
   }
 
   async connectAsGuest({ roomId, roomSecret }) {
+    this.closed = false;
     await this.joinRoom({ roomId, roomSecret });
 
     this.role = 'guest';
@@ -697,6 +699,12 @@ export class NetworkBridge {
     this.dataChannel = null;
     this.audioStream = null;
     this.connected = false;
+    this.roomId = '';
+    this.roomSecret = '';
+    this.peerId = '';
+    this.remotePeerId = '';
+    this.role = '';
+    this.pendingIce = [];
   }
 }
 
