@@ -219,6 +219,12 @@
       showToast(`Возвращаем ${game.title}`);
       fitWorld();
 
+      postToGameFrame(existingFrame, 'GC_INIT', {
+        bridgeId: state.bridgeId,
+        gameId: game.id,
+        snapshot: state.snapshot,
+        at: Date.now()
+      });
       postToGameFrame(existingFrame, 'GC_RESTORE_GAME', { gameId: game.id, at: Date.now() });
       if (state.snapshot) postToGameFrame(existingFrame, 'GC_SNAPSHOT', state.snapshot);
 
