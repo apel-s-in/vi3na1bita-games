@@ -99,36 +99,54 @@ export class NetworkBridge {
   }
 
   async _req(action, data = {}) {
-    const res = await fetch(this.signalingUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'X-Vi3-Player': this.playerId,
-        'X-Vi3-Secret': this.clientSecret
-      },
-      credentials: 'omit',
-      mode: 'cors',
-      body: JSON.stringify({
-        action,
-        playerId: this.playerId,
-        clientSecret: this.clientSecret,
-        displayName: this.displayName,
-        gameId: this.gameId,
-        ...data
-      })
-    });
+    let lastErr = null;
 
-    const text = await res.text();
-    const json = jsonParse(text) || {};
-    if (!res.ok || json.ok === false) {
-      const err = new Error(json.error || json.reason || `http_${res.status}`);
-      err.status = res.status;
-      err.payload = json;
-      throw err;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 12000);
+
+      try {
+        const res = await fetch(this.signalingUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Vi3-Player': this.playerId,
+            'X-Vi3-Secret': this.clientSecret
+          },
+          credentials: 'omit',
+          mode: 'cors',
+          signal: ctrl.signal,
+          body: JSON.stringify({
+            action,
+            playerId: this.playerId,
+            clientSecret: this.clientSecret,
+            displayName: this.displayName,
+            gameId: this.gameId,
+            ...data
+          })
+        });
+
+        const text = await res.text();
+        const json = jsonParse(text) || {};
+        if (!res.ok || json.ok === false) {
+          const err = new Error(json.error || json.reason || `http_${res.status}`);
+          err.status = res.status;
+          err.payload = json;
+          throw err;
+        }
+
+        return json;
+      } catch (err) {
+        lastErr = err;
+        if (attempt > 0 || !/AbortError|network|fetch|timeout/i.test(String(err?.name || err?.message || err))) break;
+        await wait(350);
+      } finally {
+        clearTimeout(timeout);
+      }
     }
 
-    return json;
+    throw lastErr || new Error('network_request_failed');
   }
 
   _emitStatus(label, online = false, extra = {}) {
@@ -243,27 +261,12 @@ export class NetworkBridge {
   }
 
   async createNearbyGameCode() {
-    if (!this.roomId) {
-      const hostPeerId = makeId('host');
-      const res = await this._req('nearby_game_create', {
-        gameId: this.gameId,
-        peerId: hostPeerId
-      });
-
-      this.role = 'host';
-      this.roomId = res.roomId;
-      this.roomSecret = res.roomSecret;
-      this.peerId = res.hostPeerId || hostPeerId;
-      this.remotePeerId = res.guestPeerId || `${res.roomId}:guest`;
-
-      return {
-        ...res,
-        joinUrl: this.buildJoinUrl()
-      };
-    }
+    if (!this.roomId) await this.connectAsHost();
 
     const res = await this._req('nearby_game_create', {
       gameId: this.gameId,
+      roomId: this.roomId,
+      roomSecret: this.roomSecret,
       peerId: this.peerId
     });
 
