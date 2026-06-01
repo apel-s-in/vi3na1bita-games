@@ -419,10 +419,13 @@ export class NetworkBridge {
       } catch (err) {
         fails++;
         this._emitStatus(fails > 2 ? 'signal retry' : 'signal wait', false, {
+          transient: true,
           error: err?.message || String(err || '')
         });
 
-        if (fails === 3 || fails % 8 === 0) this.onError(err);
+        // Важно: signal_poll может кратко падать на мобильной сети.
+        // Не вызываем onError до открытия DataChannel, иначе игра сама помечает P2P как разорванный.
+        if (this.connected && (fails === 3 || fails % 8 === 0)) this.onError(err);
       } finally {
         busy = false;
         const backoff = Math.min(5000, intervalMs + fails * 450);
