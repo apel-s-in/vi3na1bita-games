@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-06-01 08:23:12 UTC
+Сгенерировано: 2026-06-01 09:24:20 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -826,6 +826,12 @@ Important:
       showToast(`Возвращаем ${game.title}`);
       fitWorld();
 
+      postToGameFrame(existingFrame, 'GC_INIT', {
+        bridgeId: state.bridgeId,
+        gameId: game.id,
+        snapshot: state.snapshot,
+        at: Date.now()
+      });
       postToGameFrame(existingFrame, 'GC_RESTORE_GAME', { gameId: game.id, at: Date.now() });
       if (state.snapshot) postToGameFrame(existingFrame, 'GC_SNAPSHOT', state.snapshot);
 
