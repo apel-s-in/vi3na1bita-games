@@ -242,6 +242,46 @@ export class NetworkBridge {
     return this._req('leaderboard_get', {});
   }
 
+  async createNearbyGameCode() {
+    if (!this.roomId) {
+      const hostPeerId = makeId('host');
+      const res = await this._req('nearby_game_create', {
+        gameId: this.gameId,
+        peerId: hostPeerId
+      });
+
+      this.role = 'host';
+      this.roomId = res.roomId;
+      this.roomSecret = res.roomSecret;
+      this.peerId = res.hostPeerId || hostPeerId;
+      this.remotePeerId = res.guestPeerId || `${res.roomId}:guest`;
+
+      return {
+        ...res,
+        joinUrl: this.buildJoinUrl()
+      };
+    }
+
+    const res = await this._req('nearby_game_create', {
+      gameId: this.gameId,
+      peerId: this.peerId
+    });
+
+    return {
+      ...res,
+      roomId: this.roomId,
+      roomSecret: this.roomSecret,
+      joinUrl: this.buildJoinUrl()
+    };
+  }
+
+  async getNearbyGame(code) {
+    return this._req('nearby_game_join', {
+      code: safe(code).replace(/\D/g, '').slice(0, 6),
+      gameId: this.gameId
+    });
+  }
+
   async createRoom() {
     const hostPeerId = makeId('host');
     const res = await this._req('room_create', {
