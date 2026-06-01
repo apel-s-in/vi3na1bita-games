@@ -39,6 +39,21 @@
     }
   };
 
+  const postToGameFrame = (frame, type, payload = {}) => {
+    if (!frame?.contentWindow) return false;
+    try {
+      frame.contentWindow.postMessage({
+        kind: 'vitrina:game-host',
+        bridgeId: state.bridgeId,
+        type,
+        payload
+      }, '*');
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const showToast = text => {
     const toast = $('toast');
     if (!toast) return;
@@ -204,26 +219,14 @@
       showToast(`Возвращаем ${game.title}`);
       fitWorld();
 
-      try {
-        existingFrame.contentWindow?.postMessage({
-          kind: 'vitrina:game-host',
-          type: 'GC_RESTORE_GAME',
-          payload: { gameId: game.id, at: Date.now() }
-        }, '*');
-      } catch {}
+      postToGameFrame(existingFrame, 'GC_RESTORE_GAME', { gameId: game.id, at: Date.now() });
+      if (state.snapshot) postToGameFrame(existingFrame, 'GC_SNAPSHOT', state.snapshot);
 
       return;
     }
 
       const launchUrl = new URL(game.path, window.location.href);
       const params = new URLSearchParams(window.location.search);
-      
-      try {
-        const parentParams = new URLSearchParams(window.parent.location.search);
-        for (const [k, v] of parentParams.entries()) {
-          if (!params.has(k)) params.set(k, v);
-        }
-      } catch {}
 
       launchUrl.searchParams.set('host', 'game_center');
 
@@ -250,21 +253,14 @@
 
     const frame = gameHost.querySelector('.bt-game-frame');
     const postToGame = () => {
-      try {
-        frame?.contentWindow?.postMessage({
-          kind: 'vitrina:game-host',
-          type: 'GC_RESTORE_GAME',
-          payload: { gameId: game.id, at: Date.now() }
-        }, '*');
-
-        if (state.snapshot) {
-          frame?.contentWindow?.postMessage({
-            kind: 'vitrina:game-host',
-            type: 'GC_SNAPSHOT',
-            payload: state.snapshot
-          }, '*');
-        }
-      } catch {}
+      postToGameFrame(frame, 'GC_INIT', {
+        bridgeId: state.bridgeId,
+        gameId: game.id,
+        snapshot: state.snapshot,
+        at: Date.now()
+      });
+      postToGameFrame(frame, 'GC_RESTORE_GAME', { gameId: game.id, at: Date.now() });
+      if (state.snapshot) postToGameFrame(frame, 'GC_SNAPSHOT', state.snapshot);
     };
 
     frame?.addEventListener('load', () => {
@@ -304,23 +300,14 @@
 
         showToast('Возвращаемся в игру');
 
-        try {
-          frame.contentWindow?.postMessage({
-            kind: 'vitrina:game-host',
-            type: 'GC_RESTORE_GAME',
-            payload: { gameId: activeId, at: Date.now() }
-          }, '*');
-        } catch {}
-
-        if (state.snapshot) {
-          try {
-            frame.contentWindow?.postMessage({
-              kind: 'vitrina:game-host',
-              type: 'GC_SNAPSHOT',
-              payload: state.snapshot
-            }, '*');
-          } catch {}
-        }
+        postToGameFrame(frame, 'GC_INIT', {
+          bridgeId: state.bridgeId,
+          gameId: activeId,
+          snapshot: state.snapshot,
+          at: Date.now()
+        });
+        postToGameFrame(frame, 'GC_RESTORE_GAME', { gameId: activeId, at: Date.now() });
+        if (state.snapshot) postToGameFrame(frame, 'GC_SNAPSHOT', state.snapshot);
 
         fitWorld();
         return;
@@ -474,13 +461,7 @@
       if (d.type === 'GC_SNAPSHOT' || d.type === 'GC_HOST_STATE') {
         applySnapshot(d.payload);
         const gameIframe = document.querySelector('.bt-game-frame');
-        if (gameIframe) {
-          gameIframe.contentWindow.postMessage({
-            kind: 'vitrina:game-host',
-            type: 'GC_SNAPSHOT',
-            payload: d.payload
-          }, '*');
-        }
+        if (gameIframe) postToGameFrame(gameIframe, 'GC_SNAPSHOT', d.payload);
         return;
       }
 
@@ -588,20 +569,16 @@
 
         if (gameIframe) {
           if (d.type === 'GC_READY') {
-            gameIframe.contentWindow.postMessage({
-              kind: 'vitrina:game-host',
-              type: 'GC_RESTORE_GAME',
-              payload: { gameId: state.activeGameId, at: Date.now() }
-            }, '*');
+            postToGameFrame(gameIframe, 'GC_INIT', {
+              bridgeId: state.bridgeId,
+              gameId: state.activeGameId,
+              snapshot: state.snapshot,
+              at: Date.now()
+            });
+            postToGameFrame(gameIframe, 'GC_RESTORE_GAME', { gameId: state.activeGameId, at: Date.now() });
           }
 
-          if (state.snapshot) {
-            gameIframe.contentWindow.postMessage({
-              kind: 'vitrina:game-host',
-              type: 'GC_SNAPSHOT',
-              payload: state.snapshot
-            }, '*');
-          }
+          if (state.snapshot) postToGameFrame(gameIframe, 'GC_SNAPSHOT', state.snapshot);
         }
       }
     });
@@ -612,12 +589,6 @@
     bindScrollProxy();
 
     const launchParams = new URLSearchParams(window.location.search);
-    try {
-      const parentParams = new URLSearchParams(window.parent.location.search);
-      for (const [k, v] of parentParams.entries()) {
-        if (!launchParams.has(k)) launchParams.set(k, v);
-      }
-    } catch {}
 
     if (
       launchParams.get('gcGame') === 'war_hearts' || launchParams.get('game') === 'war_hearts'
