@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-06-01 14:29:37 UTC
+Сгенерировано: 2026-06-01 15:11:19 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2467,6 +2467,7 @@ export class NetworkBridge {
   }
 
   async connectAsHost() {
+    this.closed = false;
     if (!this.roomId) await this.createRoom();
 
     this.role = 'host';
@@ -2484,6 +2485,7 @@ export class NetworkBridge {
   }
 
   async connectAsGuest({ roomId, roomSecret }) {
+    this.closed = false;
     await this.joinRoom({ roomId, roomSecret });
 
     this.role = 'guest';
@@ -2592,6 +2594,12 @@ export class NetworkBridge {
     this.dataChannel = null;
     this.audioStream = null;
     this.connected = false;
+    this.roomId = '';
+    this.roomSecret = '';
+    this.peerId = '';
+    this.remotePeerId = '';
+    this.role = '';
+    this.pendingIce = [];
   }
 }
 
