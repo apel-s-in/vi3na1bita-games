@@ -14,6 +14,17 @@ const jsonParse = raw => {
 
 const makeId = prefix => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
+const getIceServers = () => {
+  const custom = window.VI3_RTC_ICE_SERVERS;
+  if (Array.isArray(custom) && custom.length) return custom;
+
+  return [
+    { urls: 'stun:stun.sipnet.ru:3478' },
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' }
+  ];
+};
+
 const storage = {
   get(key) {
     try { return localStorage.getItem(key); } catch { return null; }
@@ -229,10 +240,7 @@ export class NetworkBridge {
 
   _initPeer() {
     this.peer = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' }
-      ],
+      iceServers: getIceServers(),
       iceCandidatePoolSize: 4
     });
 
