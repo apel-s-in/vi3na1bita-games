@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-05-31 13:01:24 UTC
+Сгенерировано: 2026-06-01 08:18:21 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2301,8 +2301,27 @@ export class NetworkBridge {
   _startPolling(intervalMs = 800) {
     this.stopPolling();
 
-    this.pollTimer = setInterval(async () => {
-      if (this.closed || !this.roomId || !this.peerId) return;
+    let busy = false;
+    let fails = 0;
+
+    const tick = async () => {
+      if (this.closed || !this.roomId || !this.peerId) {
+        this.pollTimer = 0;
+        return;
+      }
+
+      if (document.hidden) {
+        this.pollTimer = setTimeout(tick, Math.max(1600, intervalMs * 2));
+        return;
+      }
+
+      if (busy) {
+        this.pollTimer = setTimeout(tick, intervalMs);
+        return;
+      }
+
+      busy = true;
+
       try {
         const res = await this._req('signal_poll', {
           roomId: this.roomId,
@@ -2310,18 +2329,33 @@ export class NetworkBridge {
           peerId: this.peerId
         });
 
+        fails = 0;
+
         for (const msg of res.messages || []) {
           await this._handleSignal(msg);
         }
       } catch (err) {
-        this.stopPolling();
-        this.onError(err);
+        fails++;
+        this._emitStatus(fails > 2 ? 'signal retry' : 'signal wait', false, {
+          error: err?.message || String(err || '')
+        });
+
+        if (fails === 3 || fails % 8 === 0) this.onError(err);
+      } finally {
+        busy = false;
+        const backoff = Math.min(5000, intervalMs + fails * 450);
+        this.pollTimer = setTimeout(tick, fails ? backoff : intervalMs);
       }
-    }, intervalMs);
+    };
+
+    this.pollTimer = setTimeout(tick, 20);
   }
 
   stopPolling() {
-    if (this.pollTimer) clearInterval(this.pollTimer);
+    if (this.pollTimer) {
+      clearTimeout(this.pollTimer);
+      clearInterval(this.pollTimer);
+    }
     this.pollTimer = 0;
   }
 
