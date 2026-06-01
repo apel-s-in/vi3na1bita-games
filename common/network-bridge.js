@@ -78,6 +78,7 @@ export class NetworkBridge {
     this.pendingIce = [];
     this.connected = false;
     this.closed = false;
+    this.iceServers = getIceServers();
 
     this.onConnect = () => {};
     this.onDisconnect = () => {};
@@ -126,6 +127,8 @@ export class NetworkBridge {
   }
 
   async init() {
+    await this._loadRtcConfig();
+
     await this._req('player_register', {
       displayName: this.displayName
     });
@@ -133,6 +136,18 @@ export class NetworkBridge {
     this._startHeartbeat();
     this._emitStatus('ready', false);
     return true;
+  }
+
+  async _loadRtcConfig() {
+    try {
+      const res = await this._req('rtc_config', {});
+      if (Array.isArray(res.iceServers) && res.iceServers.length) {
+        this.iceServers = res.iceServers;
+      }
+    } catch {
+      this.iceServers = getIceServers();
+    }
+    return this.iceServers;
   }
 
   async heartbeat() {
@@ -240,7 +255,7 @@ export class NetworkBridge {
 
   _initPeer() {
     this.peer = new RTCPeerConnection({
-      iceServers: getIceServers(),
+      iceServers: this.iceServers || getIceServers(),
       iceCandidatePoolSize: 4
     });
 
