@@ -79,6 +79,14 @@ export class NetworkBridge {
     this.connected = false;
     this.closed = false;
     this.iceServers = getIceServers();
+    this.iceDiagnostics = {
+      host: false,
+      srflx: false,
+      relay: false,
+      selected: '',
+      usesTurn: false,
+      updatedAt: 0
+    };
 
     this.onConnect = () => {};
     this.onDisconnect = () => {};
@@ -87,6 +95,7 @@ export class NetworkBridge {
     this.onStatus = () => {};
     this.onRoom = () => {};
     this.onError = () => {};
+    this.onIceDiagnostics = () => {};
   }
 
   async _req(action, data = {}) {
@@ -123,7 +132,55 @@ export class NetworkBridge {
   }
 
   _emitStatus(label, online = false, extra = {}) {
-    this.onStatus({ label, online, ...extra });
+    this.onStatus({ label, online, ice: this.iceDiagnostics, ...extra });
+  }
+
+  _markIceCandidate(candidate) {
+    const text = String(candidate?.candidate || candidate || '');
+    const type = (text.match(/ typ ([a-z0-9]+)/i) || [])[1] || '';
+
+    if (type === 'host') this.iceDiagnostics.host = true;
+    if (type === 'srflx') this.iceDiagnostics.srflx = true;
+    if (type === 'relay') {
+      this.iceDiagnostics.relay = true;
+      this.iceDiagnostics.usesTurn = true;
+    }
+
+    this.iceDiagnostics.updatedAt = Date.now();
+    this.onIceDiagnostics({ ...this.iceDiagnostics });
+  }
+
+  async _refreshSelectedCandidatePair() {
+    if (!this.peer?.getStats) return this.iceDiagnostics;
+
+    try {
+      const stats = await this.peer.getStats();
+      let selectedPair = null;
+
+      stats.forEach(report => {
+        if (report.type === 'transport' && report.selectedCandidatePairId) {
+          selectedPair = stats.get(report.selectedCandidatePairId);
+        }
+        if (report.type === 'candidate-pair' && report.selected) {
+          selectedPair = report;
+        }
+      });
+
+      if (!selectedPair) return this.iceDiagnostics;
+
+      const local = stats.get(selectedPair.localCandidateId);
+      const remote = stats.get(selectedPair.remoteCandidateId);
+      const localType = local?.candidateType || '';
+      const remoteType = remote?.candidateType || '';
+
+      this.iceDiagnostics.selected = [localType, remoteType].filter(Boolean).join('↔');
+      this.iceDiagnostics.usesTurn = localType === 'relay' || remoteType === 'relay' || this.iceDiagnostics.relay;
+      this.iceDiagnostics.updatedAt = Date.now();
+
+      this.onIceDiagnostics({ ...this.iceDiagnostics });
+    } catch {}
+
+    return this.iceDiagnostics;
   }
 
   async init() {
@@ -174,19 +231,6 @@ export class NetworkBridge {
       inviteId,
       secret,
       displayName: this.displayName
-    });
-  }
-
-  async createGameInvite(toPlayerId) {
-    return this._req('game_invite_create', {
-      toPlayerId,
-      gameId: this.gameId
-    });
-  }
-
-  async pollGameInvites() {
-    return this._req('game_invite_poll', {
-      gameId: this.gameId
     });
   }
 
@@ -269,6 +313,7 @@ export class NetworkBridge {
     }
 
     this.peer.onicecandidate = e => {
+      if (e.candidate) this._markIceCandidate(e.candidate);
       if (!e.candidate || !this.roomId || !this.remotePeerId) return;
       this._sendSignal('ice', e.candidate).catch(err => this.onError(err));
     };
@@ -277,7 +322,7 @@ export class NetworkBridge {
       const st = this.peer?.connectionState || 'unknown';
       if (st === 'connected') {
         this.connected = true;
-        this._emitStatus('online', true);
+        this._refreshSelectedCandidatePair().finally(() => this._emitStatus('online', true));
       }
       if (['disconnected', 'failed', 'closed'].includes(st)) {
         this.connected = false;
@@ -395,6 +440,7 @@ export class NetworkBridge {
     }
 
     if (type === 'ice') {
+      this._markIceCandidate(data);
       if (!this.peer.remoteDescription) {
         this.pendingIce.push(data);
         return;
