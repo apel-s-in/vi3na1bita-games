@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-06-05 16:02:17 UTC
+Сгенерировано: 2026-06-05 17:20:50 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1920,6 +1920,11 @@ const getIceServers = () => {
   ];
 };
 
+const getCandidateType = candidate => {
+  const text = String(candidate?.candidate || candidate || '');
+  return (text.match(/ typ ([a-z0-9]+)/i) || [])[1] || '';
+};
+
 const storage = {
   get(key) {
     try { return localStorage.getItem(key); } catch { return null; }
@@ -2049,8 +2054,7 @@ export class NetworkBridge {
   }
 
   _markIceCandidate(candidate) {
-    const text = String(candidate?.candidate || candidate || '');
-    const type = (text.match(/ typ ([a-z0-9]+)/i) || [])[1] || '';
+    const type = getCandidateType(candidate);
 
     if (type === 'host') this.iceDiagnostics.host = true;
     if (type === 'srflx') this.iceDiagnostics.srflx = true;
@@ -2235,15 +2239,32 @@ export class NetworkBridge {
     return u.toString();
   }
 
-_initPeer() {
-const peerConfig = {
-iceServers: this.forceLocalOnly ? [] : (this.iceServers || getIceServers()),
-iceCandidatePoolSize: this.forceLocalOnly ? 10 : 4,
-iceTransportPolicy: this.forceLocalOnly ? 'all' : 'all',
-bundlePolicy: 'max-bundle',
-rtcpMuxPolicy: 'require'
-};
-this.peer = new RTCPeerConnection(peerConfig);
+  _initPeer() {
+    try { this.dataChannel?.close?.(); } catch {}
+    try { this.peer?.close?.(); } catch {}
+
+    this.peer = null;
+    this.dataChannel = null;
+    this.connected = false;
+    this.pendingIce = [];
+    this.iceDiagnostics = {
+      host: false,
+      srflx: false,
+      relay: false,
+      selected: '',
+      usesTurn: false,
+      updatedAt: 0
+    };
+
+    const peerConfig = {
+      iceServers: this.forceLocalOnly ? [] : (this.iceServers || getIceServers()),
+      iceCandidatePoolSize: this.forceLocalOnly ? 8 : 4,
+      iceTransportPolicy: 'all',
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
+    };
+
+    this.peer = new RTCPeerConnection(peerConfig);
 
     try {
       const transceiver = this.peer.addTransceiver('audio', {
@@ -2254,16 +2275,18 @@ this.peer = new RTCPeerConnection(peerConfig);
       this.audioSender = null;
     }
 
-this.peer.onicecandidate = e => {
-if (!e.candidate) return;
-// В LAN-режиме используем ТОЛЬКО host-кандидаты (локальные IP)
-if (this.forceLocalOnly && e.candidate.type !== 'host') {
-return;
-}
-this._markIceCandidate(e.candidate);
-if (!this.roomId || !this.remotePeerId) return;
-this._sendSignal('ice', e.candidate).catch(err => this.onError(err));
-};
+    this.peer.onicecandidate = e => {
+      if (!e.candidate) return;
+
+      const candidateType = getCandidateType(e.candidate);
+
+      // В LAN-only режиме оставляем только host-кандидаты, но тип берём из candidate string.
+      if (this.forceLocalOnly && candidateType && candidateType !== 'host') return;
+
+      this._markIceCandidate(e.candidate);
+      if (!this.roomId || !this.remotePeerId) return;
+      this._sendSignal('ice', e.candidate).catch(err => this.onError(err));
+    };
 
     this.peer.onconnectionstatechange = () => {
       const st = this.peer?.connectionState || 'unknown';
