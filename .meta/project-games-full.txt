@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-06-05 20:22:45 UTC
+Сгенерировано: 2026-06-05 20:23:42 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1173,6 +1173,11 @@ Important:
 
       if (d.type === 'GC_SAVE_DATA') {
         send('GC_SAVE_DATA', d.payload);
+        return;
+      }
+
+      if (d.type === 'GC_AUTH_LOGIN') {
+        send('GC_AUTH_LOGIN', d.payload || {});
         return;
       }
 
