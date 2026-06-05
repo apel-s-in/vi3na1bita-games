@@ -569,6 +569,11 @@
         return;
       }
 
+      if (d.type === 'GC_AUTH_LOGIN') {
+        send('GC_AUTH_LOGIN', d.payload || {});
+        return;
+      }
+
       if (d.type === 'GC_READY' || d.type === 'GC_REQUEST_SNAPSHOT') {
         state.screen = 'game';
         if (gameId) state.activeGameId = gameId;
