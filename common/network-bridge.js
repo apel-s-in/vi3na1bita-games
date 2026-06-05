@@ -264,6 +264,22 @@ export class NetworkBridge {
     return this._req('leaderboard_get', {});
   }
 
+  async setRoomMode({ ranked = false, localOnly = true } = {}) {
+    if (!this.roomId || !this.roomSecret) throw new Error('room_required');
+
+    const res = await this._req('room_set_mode', {
+      roomId: this.roomId,
+      roomSecret: this.roomSecret,
+      ranked: !!ranked,
+      localOnly: !!localOnly
+    });
+
+    this.ranked = !!res.ranked;
+    this.forceLocalOnly = !!res.localOnly;
+
+    return res;
+  }
+
   async createNearbyGameCode() {
     if (!this.roomId) await this.connectAsHost();
 
@@ -629,7 +645,7 @@ export class NetworkBridge {
     };
   }
 
-  async connectAsGuest({ roomId, roomSecret, forceLocalOnly = false, ranked = false }) {
+  async connectAsGuest({ roomId, roomSecret, forceLocalOnly = false, ranked = false, rankedOverride = null }) {
     this.closed = false;
     this.forceLocalOnly = !!forceLocalOnly;
     this.ranked = !!ranked;
@@ -637,6 +653,15 @@ export class NetworkBridge {
     const joined = await this.joinRoom({ roomId, roomSecret });
     this.ranked = !!(joined?.ranked ?? this.ranked);
     this.forceLocalOnly = !!(joined?.localOnly ?? this.forceLocalOnly);
+
+    if (rankedOverride !== null && !!rankedOverride !== this.ranked) {
+      const mode = await this.setRoomMode({
+        ranked: !!rankedOverride,
+        localOnly: this.forceLocalOnly
+      });
+      this.ranked = !!mode.ranked;
+      this.forceLocalOnly = !!mode.localOnly;
+    }
 
     this.role = 'guest';
     this._initPeer();
