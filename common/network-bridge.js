@@ -340,11 +340,15 @@ export class NetworkBridge {
     return u.toString();
   }
 
-  _initPeer() {
-    this.peer = new RTCPeerConnection({
-      iceServers: this.iceServers || getIceServers(),
-      iceCandidatePoolSize: 4
-    });
+_initPeer() {
+const peerConfig = {
+iceServers: this.forceLocalOnly ? [] : (this.iceServers || getIceServers()),
+iceCandidatePoolSize: this.forceLocalOnly ? 10 : 4,
+iceTransportPolicy: this.forceLocalOnly ? 'all' : 'all',
+bundlePolicy: 'max-bundle',
+rtcpMuxPolicy: 'require'
+};
+this.peer = new RTCPeerConnection(peerConfig);
 
     try {
       const transceiver = this.peer.addTransceiver('audio', {
@@ -355,11 +359,16 @@ export class NetworkBridge {
       this.audioSender = null;
     }
 
-    this.peer.onicecandidate = e => {
-      if (e.candidate) this._markIceCandidate(e.candidate);
-      if (!e.candidate || !this.roomId || !this.remotePeerId) return;
-      this._sendSignal('ice', e.candidate).catch(err => this.onError(err));
-    };
+this.peer.onicecandidate = e => {
+if (!e.candidate) return;
+// В LAN-режиме используем ТОЛЬКО host-кандидаты (локальные IP)
+if (this.forceLocalOnly && e.candidate.type !== 'host') {
+return;
+}
+this._markIceCandidate(e.candidate);
+if (!this.roomId || !this.remotePeerId) return;
+this._sendSignal('ice', e.candidate).catch(err => this.onError(err));
+};
 
     this.peer.onconnectionstatechange = () => {
       const st = this.peer?.connectionState || 'unknown';
@@ -571,43 +580,41 @@ export class NetworkBridge {
     }, 25000);
   }
 
-  async connectAsHost() {
-    this.closed = false;
-    if (!this.roomId) await this.createRoom();
+async connectAsHost(opts = {}) {
+this.closed = false;
+this.forceLocalOnly = !!opts.forceLocalOnly;
+this.ranked = !!opts.ranked;
+if (!this.roomId) await this.createRoom();
+this.role = 'host';
+this._initPeer();
+// В serverless-архитектуре хост просто ждет оффера от гостя
+this._startPolling(this.forceLocalOnly ? 150 : 800);
+this._emitStatus('waiting', false);
+return {
+roomId: this.roomId,
+roomSecret: this.roomSecret,
+joinUrl: this.buildJoinUrl()
+};
+}
 
-    this.role = 'host';
-    this._initPeer();
-
-    // В serverless-архитектуре хост просто ждет оффера от гостя
-    this._startPolling(800);
-    this._emitStatus('waiting', false);
-
-    return {
-      roomId: this.roomId,
-      roomSecret: this.roomSecret,
-      joinUrl: this.buildJoinUrl()
-    };
-  }
-
-  async connectAsGuest({ roomId, roomSecret }) {
-    this.closed = false;
-    await this.joinRoom({ roomId, roomSecret });
-
-    this.role = 'guest';
-    this._initPeer();
-    
-    // Гость создает канал и ПЕРВЫМ отправляет WebRTC Offer хосту
-    const ch = this.peer.createDataChannel('game', {
-      ordered: true
-    });
-    this._bindDataChannel(ch);
-    await this._makeAndSendOffer('initial');
-
-    this._startPolling(800);
-    this._emitStatus('connecting', false);
-
-    return true;
-  }
+async connectAsGuest({ roomId, roomSecret, forceLocalOnly = false, ranked = false }) {
+this.closed = false;
+this.forceLocalOnly = !!forceLocalOnly;
+this.ranked = !!ranked;
+await this.joinRoom({ roomId, roomSecret });
+this.role = 'guest';
+this._initPeer();
+// Гость создает канал и ПЕРВЫМ отправляет WebRTC Offer хосту
+const ch = this.peer.createDataChannel('game', {
+ordered: true,
+maxRetransmits: 5
+});
+this._bindDataChannel(ch);
+await this._makeAndSendOffer('initial');
+this._startPolling(this.forceLocalOnly ? 150 : 800);
+this._emitStatus('connecting', false);
+return true;
+}
 
   async connectFromUrl() {
     const u = new URL(window.location.href);
@@ -674,7 +681,41 @@ export class NetworkBridge {
     return true;
   }
 
-  async close() {
+// ─── LAN Wi-Fi: генерация и регистрация кодов ──────────────────────────────
+generateLanCode() {
+const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+let code = '';
+for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+return code;
+}
+
+async registerLanCode(code, roomId, roomSecret, ranked) {
+try {
+return await this._req('lan_code_register', {
+code: String(code).toUpperCase(),
+roomId,
+roomSecret,
+ranked: !!ranked,
+ttlMs: 300000
+});
+} catch {
+return null;
+}
+}
+
+async getLanRoomByCode(code) {
+const cleanCode = String(code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+if (!cleanCode) throw new Error('lan_code_required');
+const res = await this._req('lan_code_resolve', { code: cleanCode });
+if (!res?.roomId || !res?.roomSecret) throw new Error('lan_room_not_found');
+return {
+roomId: res.roomId,
+roomSecret: res.roomSecret,
+ranked: !!res.ranked
+};
+}
+
+async close() {
     this.closed = true;
     this.stopPolling();
 
