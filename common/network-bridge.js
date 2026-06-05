@@ -603,41 +603,61 @@ export class NetworkBridge {
     }, 25000);
   }
 
-async connectAsHost(opts = {}) {
-this.closed = false;
-this.forceLocalOnly = !!opts.forceLocalOnly;
-this.ranked = !!opts.ranked;
-if (!this.roomId) await this.createRoom();
-this.role = 'host';
-this._initPeer();
-// В serverless-архитектуре хост просто ждет оффера от гостя
-this._startPolling(this.forceLocalOnly ? 150 : 800);
-this._emitStatus('waiting', false);
-return {
-roomId: this.roomId,
-roomSecret: this.roomSecret,
-joinUrl: this.buildJoinUrl()
-};
-}
+  async connectAsHost(opts = {}) {
+    this.closed = false;
+    this.forceLocalOnly = !!opts.forceLocalOnly;
+    this.ranked = !!opts.ranked;
 
-async connectAsGuest({ roomId, roomSecret, forceLocalOnly = false, ranked = false }) {
-this.closed = false;
-this.forceLocalOnly = !!forceLocalOnly;
-this.ranked = !!ranked;
-await this.joinRoom({ roomId, roomSecret });
-this.role = 'guest';
-this._initPeer();
-// Гость создает канал и ПЕРВЫМ отправляет WebRTC Offer хосту
-const ch = this.peer.createDataChannel('game', {
-ordered: true,
-maxRetransmits: 5
-});
-this._bindDataChannel(ch);
-await this._makeAndSendOffer('initial');
-this._startPolling(this.forceLocalOnly ? 150 : 800);
-this._emitStatus('connecting', false);
-return true;
-}
+    if (!this.roomId) await this.createRoom();
+
+    this.role = 'host';
+    this._initPeer();
+
+    // В serverless-архитектуре host ждёт offer от guest через signaling.
+    this._startPolling(this.forceLocalOnly ? 180 : 800);
+    this._emitStatus(this.forceLocalOnly ? 'lan waiting' : 'waiting', false, {
+      localOnly: this.forceLocalOnly,
+      ranked: this.ranked
+    });
+
+    return {
+      roomId: this.roomId,
+      roomSecret: this.roomSecret,
+      joinUrl: this.buildJoinUrl(),
+      localOnly: this.forceLocalOnly,
+      ranked: this.ranked
+    };
+  }
+
+  async connectAsGuest({ roomId, roomSecret, forceLocalOnly = false, ranked = false }) {
+    this.closed = false;
+    this.forceLocalOnly = !!forceLocalOnly;
+    this.ranked = !!ranked;
+
+    const joined = await this.joinRoom({ roomId, roomSecret });
+    this.ranked = !!(joined?.ranked ?? this.ranked);
+    this.forceLocalOnly = !!(joined?.localOnly ?? this.forceLocalOnly);
+
+    this.role = 'guest';
+    this._initPeer();
+
+    // Guest первым создаёт DataChannel и отправляет initial offer.
+    const ch = this.peer.createDataChannel('game', {
+      ordered: true,
+      maxRetransmits: 5
+    });
+
+    this._bindDataChannel(ch);
+    await this._makeAndSendOffer('initial');
+
+    this._startPolling(this.forceLocalOnly ? 180 : 800);
+    this._emitStatus(this.forceLocalOnly ? 'lan connecting' : 'connecting', false, {
+      localOnly: this.forceLocalOnly,
+      ranked: this.ranked
+    });
+
+    return true;
+  }
 
   async connectFromUrl() {
     const u = new URL(window.location.href);
@@ -713,17 +733,13 @@ return code;
 }
 
 async registerLanCode(code, roomId, roomSecret, ranked) {
-try {
-return await this._req('lan_code_register', {
-code: String(code).toUpperCase(),
-roomId,
-roomSecret,
-ranked: !!ranked,
-ttlMs: 300000
-});
-} catch {
-return null;
-}
+  return this._req('lan_code_register', {
+    code: String(code).toUpperCase(),
+    roomId,
+    roomSecret,
+    ranked: !!ranked,
+    ttlMs: 300000
+  });
 }
 
 async getLanRoomByCode(code) {
@@ -732,9 +748,12 @@ if (!cleanCode) throw new Error('lan_code_required');
 const res = await this._req('lan_code_resolve', { code: cleanCode });
 if (!res?.roomId || !res?.roomSecret) throw new Error('lan_room_not_found');
 return {
-roomId: res.roomId,
-roomSecret: res.roomSecret,
-ranked: !!res.ranked
+  roomId: res.roomId,
+  roomSecret: res.roomSecret,
+  ranked: !!res.ranked,
+  localOnly: !!res.localOnly,
+  matchMode: res.matchMode || (res.ranked ? 'ranked' : 'casual'),
+  expiresAt: res.expiresAt || 0
 };
 }
 
