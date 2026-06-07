@@ -479,7 +479,9 @@ export class NetworkBridge {
   }
 
   async _sendSignal(type, data) {
-    return this._req('signal_send', {
+    this._emitStatus(`send ${type}`, false, { signalType: type });
+
+    const res = await this._req('signal_send', {
       roomId: this.roomId,
       roomSecret: this.roomSecret,
       fromPeerId: this.peerId,
@@ -487,6 +489,9 @@ export class NetworkBridge {
       type,
       payload: { type, data }
     });
+
+    this._emitStatus(`${type} sent`, false, { signalType: type });
+    return res;
   }
 
   async _makeAndSendOffer(reason = 'offer') {
@@ -505,6 +510,7 @@ export class NetworkBridge {
     if (!this.peer) return;
 
     if (type === 'offer') {
+      this._emitStatus('offer received', false, { signalType: 'offer' });
       const desc = data?.sdp || data;
       await this.peer.setRemoteDescription(new RTCSessionDescription(desc));
 
@@ -519,6 +525,7 @@ export class NetworkBridge {
     }
 
     if (type === 'answer') {
+      this._emitStatus('answer received', false, { signalType: 'answer' });
       const desc = data?.sdp || data;
       if (this.peer.signalingState !== 'stable') {
         await this.peer.setRemoteDescription(new RTCSessionDescription(desc));
@@ -531,6 +538,7 @@ export class NetworkBridge {
     }
 
     if (type === 'ice') {
+      this._emitStatus('ice received', false, { signalType: 'ice' });
       this._markIceCandidate(data);
       if (!this.peer.remoteDescription) {
         this.pendingIce.push(data);
