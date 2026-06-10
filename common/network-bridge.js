@@ -377,9 +377,12 @@ export class NetworkBridge {
       updatedAt: 0
     };
 
+    // ВАЖНО: STUN всегда включён. Браузеры маскируют host-кандидаты через mDNS (.local),
+    // и без STUN два устройства в одной Wi-Fi часто не находят друг друга.
+    // srflx-кандидаты с одинаковым внешним IP всё равно дают прямое локальное соединение.
     const peerConfig = {
-      iceServers: this.forceLocalOnly ? [] : (this.iceServers || getIceServers()),
-      iceCandidatePoolSize: this.forceLocalOnly ? 8 : 4,
+      iceServers: this.iceServers || getIceServers(),
+      iceCandidatePoolSize: 8,
       iceTransportPolicy: 'all',
       bundlePolicy: 'max-bundle',
       rtcpMuxPolicy: 'require'
@@ -399,11 +402,8 @@ export class NetworkBridge {
     this.peer.onicecandidate = e => {
       if (!e.candidate) return;
 
-      const candidateType = getCandidateType(e.candidate);
-
-      // В LAN-only режиме оставляем только host-кандидаты, но тип берём из candidate string.
-      if (this.forceLocalOnly && candidateType && candidateType !== 'host') return;
-
+      // Никогда не фильтруем кандидаты: симметричный полный набор у host и guest
+      // даёт максимальный шанс прямого соединения в одной Wi-Fi.
       this._markIceCandidate(e.candidate);
       if (!this.roomId || !this.remotePeerId) return;
       this._sendSignal('ice', e.candidate).catch(err => this.onError(err));
@@ -759,15 +759,15 @@ export class NetworkBridge {
 
 // ─── LAN Wi-Fi: генерация и регистрация кодов ──────────────────────────────
 generateLanCode() {
-const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-let code = '';
-for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-return code;
+  // Только цифры: легко продиктовать другу голосом.
+  let code = '';
+  for (let i = 0; i < 6; i++) code += String(Math.floor(Math.random() * 10));
+  return code;
 }
 
 async registerLanCode(code, roomId, roomSecret, ranked) {
   return this._req('lan_code_register', {
-    code: String(code).toUpperCase(),
+    code: String(code).replace(/\D/g, '').slice(0, 6),
     roomId,
     roomSecret,
     ranked: !!ranked,
@@ -776,7 +776,7 @@ async registerLanCode(code, roomId, roomSecret, ranked) {
 }
 
 async getLanRoomByCode(code) {
-const cleanCode = String(code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+const cleanCode = String(code || '').replace(/\D/g, '').slice(0, 6);
 if (!cleanCode) throw new Error('lan_code_required');
 const res = await this._req('lan_code_resolve', { code: cleanCode });
 if (!res?.roomId || !res?.roomSecret) throw new Error('lan_room_not_found');
