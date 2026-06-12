@@ -173,18 +173,28 @@ const readRepoUrl = () => {
 };
 
 const renderTree = () => {
-  const lines = ['СТРУКТУРА ПРОЕКТА (компактная):'];
-  const walk = (dir, relDir) => {
+  const lines = ['СТРУКТУРА ПРОЕКТА:', `${path.basename(ROOT)}/`];
+
+  const walk = (dir, prefix = '') => {
     let entries = [];
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
-    const visible = entries.filter(x => !isExcluded(toUnix(path.relative(ROOT, path.join(dir, x.name))), EXCLUDE_TREE_PATTERNS)).sort((a, b) => a.name.localeCompare(b.name));
-    const files = visible.filter(x => !x.isDirectory()).map(x => x.name), subdirs = visible.filter(x => x.isDirectory());
-    const p = relDir ? `/${relDir}/` : '/';
-    if (files.length) lines.push(`[${p}] ${files.join(', ')}`);
-    else if (!subdirs.length) lines.push(`[${p}] (пусто)`);
-    subdirs.forEach(x => walk(path.join(dir, x.name), relDir ? `${relDir}/${x.name}` : x.name));
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    const visible = entries
+      .filter(x => !isExcluded(toUnix(path.relative(ROOT, path.join(dir, x.name)))))
+      .sort((a, b) => a.isDirectory() !== b.isDirectory() ? (a.isDirectory() ? -1 : 1) : a.name.localeCompare(b.name));
+
+    visible.forEach((x, i) => {
+      const last = i === visible.length - 1;
+      lines.push(`${prefix}${last ? '└── ' : '├── '}${x.name}${x.isDirectory() ? '/' : ''}`);
+      if (x.isDirectory()) walk(path.join(dir, x.name), `${prefix}${last ? '    ' : '│   '}`);
+    });
   };
-  walk(ROOT, '');
+
+  walk(ROOT);
   return lines.join('\n');
 };
 
