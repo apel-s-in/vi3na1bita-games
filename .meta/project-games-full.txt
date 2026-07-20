@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 20:46:57 UTC
+Сгенерировано: 2026-07-20 20:47:32 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1117,7 +1117,18 @@ Important:
       setBridgeLabel('standalone');
       applySnapshot({
         user: { displayName: 'Standalone' },
-        progress: { level: 1, xp: 1250, achievementsUnlocked: 0, achievementsTotal: 0 },
+        progress: {
+          level: 1,
+          xp: 0,
+          achievementsUnlocked: 0,
+          achievementsTotal: 0
+        },
+        wallet: {
+          available: false,
+          shards: 0,
+          locked: 0,
+          version: 0
+        },
         player: { title: '' }
       });
     }
