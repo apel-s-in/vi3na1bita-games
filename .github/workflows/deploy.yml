@@ -71,7 +71,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -z "${BEFORE_SHA:-}" ] || [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
             echo "Manual/initial deploy: full sync (size-only)"
             aws --endpoint-url=https://storage.yandexcloud.net s3 sync ./ "s3://$BUCKET/$PREFIX/" \
-              --delete --size-only --only-show-errors \
+              --delete --only-show-errors \
               --exclude "*" \
               --include "*.html" \
               --include "*.css" \
