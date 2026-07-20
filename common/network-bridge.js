@@ -279,6 +279,28 @@ export class NetworkBridge {
     return this._req('leaderboard_get', {});
   }
 
+  async getProfile(friendId) {
+    const result = await this._req('profile_get', {
+      friendId: safe(friendId)
+    });
+    return result.profile || null;
+  }
+
+  async sendGameInvite({
+    toFriendId,
+    gameId = this.gameId,
+    roomId,
+    roomSecret
+  } = {}) {
+    return this._req('push_send', {
+      toFriendId: safe(toFriendId),
+      kind: 'GAME_INVITE',
+      gameId: safe(gameId),
+      roomId: safe(roomId),
+      roomSecret: safe(roomSecret)
+    });
+  }
+
   async setRoomMode({ ranked = false, localOnly = true } = {}) {
     if (!this.roomId || !this.roomSecret) throw new Error('room_required');
 
