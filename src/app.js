@@ -104,8 +104,15 @@
     const progress = state.snapshot?.progress || {};
     const user = state.snapshot?.user || {};
 
+    const wallet = state.snapshot?.wallet || {};
     const shards = $('shards-count');
-    if (shards) shards.textContent = fmtNum(progress.xp || 1250);
+
+    if (shards) {
+      shards.textContent = fmtNum(wallet.shards || 0);
+      shards.title = wallet.available
+        ? 'Баланс Осколков'
+        : 'Экономика готовится к запуску';
+    }
 
     const avatarBox = $('avatar-box');
     if (avatarBox && user.avatar) {
