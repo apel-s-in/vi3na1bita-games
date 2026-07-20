@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 20:05:38 UTC
+Сгенерировано: 2026-07-20 20:43:11 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1920,7 +1920,71 @@ const jsonParse = raw => {
 };
 
 const makeId = prefix => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+const rpcPending = new Map();
 
+window.addEventListener('message', event => {
+  const data = event.data || {};
+
+  if (
+    data.kind !== 'vitrina:game-host' ||
+    data.type !== 'GC_SIGNALING_RESPONSE'
+  ) return;
+
+  const payload = data.payload || {};
+  const requestId = safe(payload.requestId);
+  const pending = rpcPending.get(requestId);
+
+  if (!pending) return;
+
+  rpcPending.delete(requestId);
+  clearTimeout(pending.timer);
+
+  if (!payload.ok) {
+    const error = new Error(
+      payload.error || 'game_rpc_failed'
+    );
+    error.status = Number(payload.status || 500);
+    pending.reject(error);
+    return;
+  }
+
+  pending.resolve(payload.result || {});
+});
+
+const requestHost = (action, data = {}) => {
+  const bridgeId = safe(window.__GC_BRIDGE_ID);
+  if (!bridgeId || window.parent === window) {
+    return Promise.reject(
+      new Error('game_parent_bridge_required')
+    );
+  }
+
+  const requestId = makeId('rpc');
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      rpcPending.delete(requestId);
+      reject(new Error('game_rpc_timeout'));
+    }, 12000);
+
+    rpcPending.set(requestId, {
+      resolve,
+      reject,
+      timer
+    });
+
+    window.parent.postMessage({
+      kind: 'vitrina:game',
+      bridgeId,
+      type: 'GC_SIGNALING_REQUEST',
+      payload: {
+        requestId,
+        action,
+        data
+      }
+    }, '*');
+  });
+};
 const getIceServers = () => {
   const custom = window.VI3_RTC_ICE_SERVERS;
   if (Array.isArray(custom) && custom.length) return custom;
@@ -1937,41 +2001,14 @@ const getCandidateType = candidate => {
   return (text.match(/ typ ([a-z0-9]+)/i) || [])[1] || '';
 };
 
-const storage = {
-  get(key) {
-    try { return localStorage.getItem(key); } catch { return null; }
-  },
-  set(key, value) {
-    try { localStorage.setItem(key, value); return true; } catch { return false; }
-  }
-};
-
-const getOrCreateIdentity = () => {
-  let playerId = storage.get('vi3:games:playerId');
-  let clientSecret = storage.get('vi3:games:clientSecret');
-
-  if (!playerId) {
-    playerId = makeId('plr');
-    storage.set('vi3:games:playerId', playerId);
-  }
-
-  if (!clientSecret) {
-    clientSecret = `${makeId('sec')}_${Math.random().toString(36).slice(2)}`;
-    storage.set('vi3:games:clientSecret', clientSecret);
-  }
-
-  return { playerId, clientSecret };
-};
-
 export class NetworkBridge {
   constructor(myIdOrOptions = {}) {
-    const opts = typeof myIdOrOptions === 'object' ? myIdOrOptions : { playerId: myIdOrOptions };
-    const ident = getOrCreateIdentity();
+    const opts = typeof myIdOrOptions === 'object'
+      ? myIdOrOptions
+      : { playerId: myIdOrOptions };
 
-    this.signalingUrl = opts.signalingUrl || DEFAULT_SIGNALING_URL;
-    this.gameId = opts.gameId || 'generic';
-    this.playerId = safe(opts.playerId || opts.myId || ident.playerId);
-    this.clientSecret = safe(opts.clientSecret || ident.clientSecret);
+    this.gameId = safe(opts.gameId || 'generic');
+    this.playerId = safe(opts.playerId || opts.myId || '');
     this.displayName = safe(opts.displayName || 'Игрок');
 
     this.roomId = '';
@@ -2011,54 +2048,32 @@ export class NetworkBridge {
   }
 
   async _req(action, data = {}) {
-    let lastErr = null;
+    let lastError = null;
 
     for (let attempt = 0; attempt < 2; attempt++) {
-      const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), 12000);
-
       try {
-        const res = await fetch(this.signalingUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'X-Vi3-Player': this.playerId,
-            'X-Vi3-Secret': this.clientSecret
-          },
-          credentials: 'omit',
-          mode: 'cors',
-          signal: ctrl.signal,
-          body: JSON.stringify({
-            action,
-            playerId: this.playerId,
-            clientSecret: this.clientSecret,
-            displayName: this.displayName,
-            gameId: this.gameId,
-            ...data
-          })
+        return await requestHost(action, {
+          displayName: this.displayName,
+          gameId: this.gameId,
+          ...data
         });
+      } catch (error) {
+        lastError = error;
 
-        const text = await res.text();
-        const json = jsonParse(text) || {};
-        if (!res.ok || json.ok === false) {
-          const err = new Error(json.error || json.reason || `http_${res.status}`);
-          err.status = res.status;
-          err.payload = json;
-          throw err;
+        if (
+          attempt > 0 ||
+          !/timeout|network|unreachable/i.test(
+            String(error?.message || '')
+          )
+        ) {
+          break;
         }
 
-        return json;
-      } catch (err) {
-        lastErr = err;
-        if (attempt > 0 || !/AbortError|network|fetch|timeout/i.test(String(err?.name || err?.message || err))) break;
         await wait(350);
-      } finally {
-        clearTimeout(timeout);
       }
     }
 
-    throw lastErr || new Error('network_request_failed');
+    throw lastError || new Error('game_rpc_failed');
   }
 
   _emitStatus(label, online = false, extra = {}) {
