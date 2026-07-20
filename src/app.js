@@ -510,7 +510,18 @@
       setBridgeLabel('standalone');
       applySnapshot({
         user: { displayName: 'Standalone' },
-        progress: { level: 1, xp: 1250, achievementsUnlocked: 0, achievementsTotal: 0 },
+        progress: {
+          level: 1,
+          xp: 0,
+          achievementsUnlocked: 0,
+          achievementsTotal: 0
+        },
+        wallet: {
+          available: false,
+          shards: 0,
+          locked: 0,
+          version: 0
+        },
         player: { title: '' }
       });
     }
