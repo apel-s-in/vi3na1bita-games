@@ -4,9 +4,13 @@
  * Все data/E2EE операции выполняются основным приложением через RPC.
  */
 
+import {
+  attachEmbeddedFriendsCoreMethods
+} from 'https://vi3na1bita.website.yandexcloud.net/Friends/embedded-rpc-contract.js?v=8.9.4';
+
 const FRIENDS_BASE =
   'https://vi3na1bita.website.yandexcloud.net/Friends';
-const DEFAULT_BUILD = '8.9.2';
+const DEFAULT_BUILD = '8.9.4';
 const RPC_TIMEOUT_MS = 20000;
 
 const pending = new Map();
@@ -137,6 +141,11 @@ class FriendsRpcCore {
       yandexLinked: !!identity.yandexLinked
     };
     this.chatE2eeV2 = true;
+
+    attachEmbeddedFriendsCoreMethods(
+      this,
+      (method, args) => requestHost(method, args)
+    );
   }
 
   setIdentity(identity = {}) {
@@ -146,6 +155,7 @@ class FriendsRpcCore {
       avatar: safe(identity.avatar || ''),
       yandexLinked: !!identity.yandexLinked
     };
+
     return this.identity;
   }
 
@@ -158,114 +168,6 @@ class FriendsRpcCore {
 
   call(method, ...args) {
     return requestHost(method, args);
-  }
-
-  register() {
-    return this.call('register');
-  }
-
-  getFriendList(options) {
-    return this.call('getFriendList', options);
-  }
-
-  getPresence(friendIds) {
-    return this.call('getPresence', friendIds);
-  }
-
-  getProfile(friendId) {
-    return this.call('getProfile', friendId);
-  }
-
-  removeFriend(friendId) {
-    return this.call('removeFriend', friendId);
-  }
-
-  createInvite() {
-    return this.call('createInvite');
-  }
-
-  acceptInvite(data) {
-    return this.call('acceptInvite', data);
-  }
-
-  createNearbyFriendCode() {
-    return this.call('createNearbyFriendCode');
-  }
-
-  joinNearbyFriendCode(code) {
-    return this.call('joinNearbyFriendCode', code);
-  }
-
-  sendPush(data) {
-    return this.call('sendPush', data);
-  }
-
-  sendChatMessage(data) {
-    return this.call('sendChatMessage', data);
-  }
-
-  reactChatMessage(data) {
-    return this.call('reactChatMessage', data);
-  }
-
-  deleteChatMessage(data) {
-    return this.call('deleteChatMessage', data);
-  }
-
-  getChatMessages(data) {
-    return this.call('getChatMessages', data);
-  }
-
-  getChatMessage(data) {
-    return this.call('getChatMessage', data);
-  }
-
-  clearChat(friendId) {
-    return this.call('clearChat', friendId);
-  }
-
-  getChatSettings(friendId) {
-    return this.call('getChatSettings', friendId);
-  }
-
-  setChatRetention(friendId, days) {
-    return this.call('setChatRetention', friendId, days);
-  }
-
-  purgeChatForBoth(friendId) {
-    return this.call('purgeChatForBoth', friendId);
-  }
-
-  markChatDelivered(data) {
-    return this.call('markChatDelivered', data);
-  }
-
-  markChatRead(data) {
-    return this.call('markChatRead', data);
-  }
-
-  getOwnCryptoDevices() {
-    return this.call('getOwnCryptoDevices');
-  }
-
-  getCryptoDevices(friendId) {
-    return this.call('getCryptoDevices', friendId);
-  }
-
-  getLocalCryptoDevice() {
-    return this.call('getLocalCryptoDevice');
-  }
-
-  revokeCryptoDevice(deviceId) {
-    return this.call('revokeCryptoDevice', deviceId);
-  }
-
-  resetCryptoDevices() {
-    return this.call('resetCryptoDevices');
-  }
-
-  getSafetyNumber(friendId) {
-    return this.call('getSafetyNumber', friendId);
   }
 
   getSafetyVerification(friendId) {
@@ -288,42 +190,6 @@ class FriendsRpcCore {
     ).catch(() => null);
 
     return row;
-  }
-
-  getRtcConfig() {
-    return this.call('getRtcConfig');
-  }
-
-  getVoiceHistory(friendId) {
-    return this.call('getVoiceHistory', friendId);
-  }
-
-  createVoiceCall(data) {
-    return this.call('createVoiceCall', data);
-  }
-
-  joinVoiceCall(data) {
-    return this.call('joinVoiceCall', data);
-  }
-
-  endVoiceCall(data) {
-    return this.call('endVoiceCall', data);
-  }
-
-  getRoom(roomId, roomSecret) {
-    return this.call('getRoom', roomId, roomSecret);
-  }
-
-  sendVoiceSignal(data) {
-    return this.call('sendVoiceSignal', data);
-  }
-
-  pollVoiceSignals(data) {
-    return this.call('pollVoiceSignals', data);
-  }
-
-  ackVoiceSignals(data) {
-    return this.call('ackVoiceSignals', data);
   }
 }
 
