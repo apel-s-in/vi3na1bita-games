@@ -61,7 +61,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-06-12 12:22:26 UTC
+Сгенерировано: 2026-07-20 20:05:38 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -711,8 +711,15 @@ Important:
     const progress = state.snapshot?.progress || {};
     const user = state.snapshot?.user || {};
 
+    const wallet = state.snapshot?.wallet || {};
     const shards = $('shards-count');
-    if (shards) shards.textContent = fmtNum(progress.xp || 1250);
+
+    if (shards) {
+      shards.textContent = fmtNum(wallet.shards || 0);
+      shards.title = wallet.available
+        ? 'Баланс Осколков'
+        : 'Экономика готовится к запуску';
+    }
 
     const avatarBox = $('avatar-box');
     if (avatarBox && user.avatar) {
