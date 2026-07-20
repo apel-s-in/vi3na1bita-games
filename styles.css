@@ -654,3 +654,8 @@ body[data-mode="play"] .bt-toast{
     animation:none;
   }
 }
+.bt-panel.bt-panel-friends{inset:76px 0 calc(68px + env(safe-area-inset-bottom));padding:0;border:0;border-radius:0;background:#07091a;box-shadow:none;overflow:hidden}
+.bt-friends-host{width:100%;height:100%;overflow:auto}
+.bt-friends-host.vf-app{max-width:none;padding:12px;background:linear-gradient(180deg,rgba(10,13,38,.98),rgba(5,7,20,.99))}
+.bt-friends-host .vf-head{margin-top:2px}
+.bt-friends-error,.gc-friends-loading{padding:24px;color:#aeb5dc;text-align:center;font-size:13px;line-height:1.5}
