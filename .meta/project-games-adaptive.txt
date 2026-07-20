@@ -62,7 +62,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 22:11:29 UTC
+Сгенерировано: 2026-07-20 22:21:35 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2137,14 +2137,35 @@ window.addEventListener('message', event => {
 
 const ensureStyles = build => {
   const id = 'vi3-canonical-friends-styles';
-  if (document.getElementById(id)) return;
+  const existing = document.getElementById(id);
 
-  const link = document.createElement('link');
+  if (existing?.dataset.ready === '1') {
+    return Promise.resolve(true);
+  }
+
+  if (existing?._readyPromise) {
+    return existing._readyPromise;
+  }
+
+  const link = existing || document.createElement('link');
   link.id = id;
   link.rel = 'stylesheet';
   link.href =
     `${FRIENDS_BASE}/styles.css?v=${encodeURIComponent(build)}`;
-  document.head.appendChild(link);
+
+  link._readyPromise = new Promise((resolve, reject) => {
+    link.addEventListener('load', () => {
+      link.dataset.ready = '1';
+      resolve(true);
+    }, { once: true });
+
+    link.addEventListener('error', () => {
+      reject(new Error('friends_styles_load_failed'));
+    }, { once: true });
+  });
+
+  if (!existing) document.head.appendChild(link);
+  return link._readyPromise;
 };
 
 class FriendsRpcCore {
@@ -2355,7 +2376,9 @@ export const mountCanonicalFriends = async ({
 } = {}) => {
   if (!root) throw new Error('friends_embed_root_required');
 
-  ensureStyles(build);
+  const contextId = makeId('friends_embed');
+  let webPushEnabled = false;
+  let destroyed = false;
 
   root.classList.add('vf-app', 'gc-friends-embed');
   root.innerHTML = `
@@ -2364,31 +2387,64 @@ export const mountCanonicalFriends = async ({
     </div>
   `;
 
-  const module = await import(
-    `${FRIENDS_BASE}/friends-ui.js?v=${encodeURIComponent(build)}`
-  );
+  const moduleUrl =
+    `${FRIENDS_BASE}/friends-ui.js?v=${encodeURIComponent(build)}`;
 
-  const core = new FriendsRpcCore(identity);
+  const [module, remoteIdentity, pushState] = await Promise.all([
+    import(moduleUrl),
+    (
+      safe(identity?.friendId) && identity?.yandexLinked
+        ? Promise.resolve(identity)
+        : requestHost('getEmbeddedIdentity')
+    ),
+    requestHost('getEmbeddedWebPushEnabled')
+      .catch(() => false),
+    ensureStyles(build)
+  ]);
 
+  webPushEnabled = !!pushState;
+
+  await requestHost('setEmbeddedFriendsActive', [{
+    contextId,
+    active: true
+  }]);
+
+  const core = new FriendsRpcCore(remoteIdentity || identity);
   root.innerHTML = '';
 
   const ui = module.mountFriendsUI(root, core, {
     onGameInvite,
-    onEnableWebPush: null,
-    getWebPushEnabled: () => false
+    onEnableWebPush: async () => {
+      const result = await requestHost('enableEmbeddedWebPush');
+      webPushEnabled = !!result?.ok;
+      return result;
+    },
+    getWebPushEnabled: () => webPushEnabled
   });
 
   await ui.refresh({ force: true });
 
+  const destroy = () => {
+    if (destroyed) return;
+    destroyed = true;
+
+    root.querySelectorAll('.vf-modal-ov')
+      .forEach(node => node.remove());
+
+    root.innerHTML = '';
+
+    requestHost('setEmbeddedFriendsActive', [{
+      contextId,
+      active: false
+    }]).catch(() => null);
+
+    onClose?.();
+  };
+
   return {
     core,
     ui,
-    destroy() {
-      root.querySelectorAll('.vf-modal-ov')
-        .forEach(node => node.remove());
-      root.innerHTML = '';
-      onClose?.();
-    }
+    destroy
   };
 };
 
