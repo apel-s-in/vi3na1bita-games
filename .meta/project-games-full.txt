@@ -43,7 +43,8 @@ vi3na1bita-games/
 ├── .github/
 │   └── workflows/
 │       ├── deploy.yml
-│       └── generate-context.yml
+│       ├── generate-context.yml
+│       └── validate.yml
 ├── .meta/
 ├── assets/
 │   └── tower/
@@ -62,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 22:23:11 UTC
+Сгенерировано: 2026-07-20 22:24:06 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2035,6 +2036,60 @@ body[data-mode="play"] .bt-toast{
 .bt-friends-host.vf-app{max-width:none;padding:12px;background:linear-gradient(180deg,rgba(10,13,38,.98),rgba(5,7,20,.99))}
 .bt-friends-host .vf-head{margin-top:2px}
 .bt-friends-error,.gc-friends-loading{padding:24px;color:#aeb5dc;text-align:center;font-size:13px;line-height:1.5}
+
+//=================================================
+// FILE: /.github/workflows/validate.yml
+name: Validate Game Center
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check src/app.js
+          node --input-type=module --check < common/friends-embed.js
+          node --input-type=module --check < common/network-bridge.js
+
+      - name: Validate iframe security contract
+        run: |
+          if grep -RFn "allow-same-origin" index.html src common; then
+            echo "Unsafe sandbox permission found"
+            exit 2
+          fi
+
+          if grep -REn "X-Vi3-Player|X-Vi3-Secret|clientSecret" src common; then
+            echo "Legacy authentication found"
+            exit 2
+          fi
+
+          if grep -REn "playerCore.*(play|pause|stop|seek|next|prev|setVolume|setMuted)" src common; then
+            echo "Game Center attempts to control music playback"
+            exit 2
+          fi
+
+      - name: Validate canonical Friends embedding
+        run: |
+          if grep -RFn "import('./common/friends-embed" src; then
+            echo "Relative Friends import is unsafe inside sandbox"
+            exit 2
+          fi
+
+          grep -q "GC_FRIENDS_REQUEST" common/friends-embed.js
+          grep -q "getEmbeddedIdentity" common/friends-embed.js
+          grep -q "setEmbeddedFriendsActive" common/friends-embed.js
 
 //=================================================
 // FILE: /common/friends-embed.js
