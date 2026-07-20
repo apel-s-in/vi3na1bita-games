@@ -271,10 +271,6 @@ export class NetworkBridge {
     });
   }
 
-  async submitMatchResult(resultData) {
-    return this._req('match_submit_result', resultData);
-  }
-
   async getLeaderboard() {
     return this._req('leaderboard_get', {});
   }
