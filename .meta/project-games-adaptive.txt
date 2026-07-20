@@ -62,7 +62,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 21:38:35 UTC
+Сгенерировано: 2026-07-20 21:39:40 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -137,7 +137,7 @@ jobs:
           }
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -z "${BEFORE_SHA:-}" ] || [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
-            echo "Manual/initial deploy: full sync (size-only)"
+            echo "Manual/initial deploy: full public sync"
             aws --endpoint-url=https://storage.yandexcloud.net s3 sync ./ "s3://$BUCKET/$PREFIX/" \
               --delete --only-show-errors \
               --exclude "*" \
