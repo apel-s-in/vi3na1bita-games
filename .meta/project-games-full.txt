@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 22:55:57 UTC
+Сгенерировано: 2026-07-20 23:06:18 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2088,8 +2088,13 @@ jobs:
           fi
 
           grep -q "GC_FRIENDS_REQUEST" common/friends-embed.js
-          grep -q "getEmbeddedIdentity" common/friends-embed.js
-          grep -q "setEmbeddedFriendsActive" common/friends-embed.js
+          grep -q "attachEmbeddedFriendsCoreMethods" common/friends-embed.js
+
+          if grep -En "^  (register|getFriendList|getPresence|getProfile|sendChatMessage)\(" \
+            common/friends-embed.js; then
+            echo "Manual Friends RPC proxy methods found"
+            exit 2
+          fi
 
 //=================================================
 // FILE: /common/friends-embed.js
