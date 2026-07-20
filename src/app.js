@@ -156,9 +156,12 @@
     `;
 
     try {
-      const module = await import(
-        './common/friends-embed.js?v=8.9.2'
-      );
+      const moduleUrl = new URL(
+        './common/friends-embed.js?v=8.9.3',
+        document.baseURI
+      ).href;
+
+      const module = await import(moduleUrl);
 
       state.friendsEmbed?.destroy?.();
 
