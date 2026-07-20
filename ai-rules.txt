@@ -20,7 +20,7 @@
 - Game Center не должен создавать AudioContext, WebAudio, Howler, <audio> или игровые звуки без отдельного parent-mediated слоя.
 - Game Center не должен читать OAuth token, localStorage, IndexedDB, metaDB или parent.window.
 - Любая связь с основным приложением — только через postMessage bridge.
-- Разрешённые исходящие сообщения: GC_READY, GC_REQUEST_SNAPSHOT, GC_DOOR_CLICKED, GC_CLOSE и будущие write-limited события только после валидации parent-side.
+- Разрешённые исходящие сообщения: GC_READY, GC_REQUEST_SNAPSHOT, GC_DOOR_CLICKED, GC_CLOSE, GC_SIGNALING_REQUEST, GC_FRIENDS_REQUEST и write-limited GC_SAVE_DATA только после строгой валидации parent-side.
 - Запрещённые исходящие сообщения: любые команды управления музыкой, громкостью, плейлистом, избранным, качеством.
 - Snapshot от parent считается read-only.
 - При standalone-запуске приложение должно работать как preview без parent bridge.
