@@ -24,7 +24,8 @@
     mode: 'play',
     screen: 'tower',
     activeGameId: '',
-    touchY: 0
+    touchY: 0,
+    friendsEmbed: null
   };
 
   const isStandalone = () => window.parent === window;
@@ -126,6 +127,68 @@
     send('GC_CLOSE', { reason: 'user_exit', at: Date.now() });
     fitWorld();
   };
+  const openFriendsTab = async () => {
+    const panel = getPanel();
+    if (!panel) return;
+
+    const gameHost = $('bt-game-host');
+    if (gameHost) gameHost.hidden = true;
+
+    state.screen = 'friends';
+
+    document.querySelectorAll('.bt-nav-item')
+      .forEach(button => button.classList.remove('is-active'));
+
+    $('nav-friends')?.classList.add('is-active');
+
+    const title = document.querySelector('.bt-title h1');
+    if (title) title.textContent = 'Друзья';
+
+    document.querySelectorAll('.bt-hotspot')
+      .forEach(node => {
+        node.style.display = 'none';
+      });
+
+    panel.hidden = false;
+    panel.classList.add('bt-panel-friends');
+    panel.innerHTML = `
+      <div class="bt-friends-host"></div>
+    `;
+
+    try {
+      const module = await import(
+        './common/friends-embed.js?v=8.9.2'
+      );
+
+      state.friendsEmbed?.destroy?.();
+
+      state.friendsEmbed = await module.mountCanonicalFriends({
+        root: panel.querySelector('.bt-friends-host'),
+        identity: state.snapshot?.friend || {},
+        build: '8.9.2',
+        onGameInvite: ({ friendId, gameId }) => {
+          closePanel();
+
+          const url = new URL(window.location.href);
+          url.searchParams.set('inviteFriend', friendId);
+          window.history.replaceState(
+            null,
+            '',
+            url.toString()
+          );
+
+          openGame(gameId || 'war_hearts');
+        }
+      });
+    } catch (error) {
+      panel.innerHTML = `
+        <div class="bt-friends-error">
+          Не удалось загрузить Друзья:
+          ${String(error?.message || 'unknown_error')}
+        </div>
+      `;
+    }
+  };
 
   const switchTab = tab => {
     closePanel();
@@ -136,13 +199,15 @@
     const hotspots = document.querySelectorAll('.bt-hotspot');
 
     if (tab === 'friends') {
-      send('GC_COLLAPSE_GAME', {
-        gameId: state.activeGameId || '',
-        targetAlbum: '__friends__',
-        reason: 'open_canonical_friends'
-      });
+      openFriendsTab();
       return;
     } else {
+      state.friendsEmbed?.destroy?.();
+      state.friendsEmbed = null;
+
+      const panel = $('bt-panel');
+      panel?.classList.remove('bt-panel-friends');
+
       $('nav-tower')?.classList.add('is-active');
       if (titleH1) titleH1.textContent = 'Башня';
       if (bgImg) bgImg.src = './assets/tower/bg.webp';
@@ -500,6 +565,20 @@
         }
         return;
       }
+      if (d.type === 'GC_FRIENDS_RESPONSE') {
+        const gameIframe = document.querySelector(
+          '.bt-game-frame'
+        );
+
+        if (gameIframe) {
+          postToGameFrame(
+            gameIframe,
+            'GC_FRIENDS_RESPONSE',
+            d.payload || {}
+          );
+        }
+        return;
+      }
       if (d.type === 'GC_RESTORE_GAME') {
         restoreActiveGame(d.payload?.gameId || state.activeGameId || 'war_hearts');
         return;
@@ -592,6 +671,11 @@
       const gameId = d.gameId || d.payload?.gameId || gameIframe?.dataset?.gameId || state.activeGameId || '';
       if (d.type === 'GC_SIGNALING_REQUEST') {
         send('GC_SIGNALING_REQUEST', d.payload || {});
+        return;
+      }
+
+      if (d.type === 'GC_FRIENDS_REQUEST') {
+        send('GC_FRIENDS_REQUEST', d.payload || {});
         return;
       }
       if (d.type === 'GC_CLOSE') {
