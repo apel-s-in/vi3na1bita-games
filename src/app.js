@@ -168,7 +168,7 @@
       state.friendsEmbed = await module.mountCanonicalFriends({
         root: panel.querySelector('.bt-friends-host'),
         identity: state.snapshot?.friend || {},
-        build: '8.9.2',
+        build: '8.9.3',
         onGameInvite: ({ friendId, gameId }) => {
           closePanel();
 
