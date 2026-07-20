@@ -136,10 +136,12 @@
     const hotspots = document.querySelectorAll('.bt-hotspot');
 
     if (tab === 'friends') {
-      $('nav-friends')?.classList.add('is-active');
-      if (titleH1) titleH1.textContent = 'Друзья';
-      if (bgImg) bgImg.src = './assets/tower/bg1.webp';
-      hotspots.forEach(h => h.style.display = 'none');
+      send('GC_COLLAPSE_GAME', {
+        gameId: state.activeGameId || '',
+        targetAlbum: '__friends__',
+        reason: 'open_canonical_friends'
+      });
+      return;
     } else {
       $('nav-tower')?.classList.add('is-active');
       if (titleH1) titleH1.textContent = 'Башня';
@@ -258,6 +260,7 @@
         data-game-id="${safeGameId}"
         title="${safeTitle}"
         src="${safeLaunchUrl}"
+        sandbox="allow-scripts allow-forms allow-popups"
         allow="${game.allow || 'fullscreen'}"
         allowfullscreen
         referrerpolicy="no-referrer"
@@ -453,7 +456,13 @@
       if (d.kind !== 'vitrina:game-host') return;
 
       if (d.type === 'GC_INIT') {
-        state.bridgeId = d.bridgeId || d.payload?.bridgeId || state.bridgeId || '';
+        state.bridgeId =
+          d.bridgeId ||
+          d.payload?.bridgeId ||
+          state.bridgeId ||
+          '';
+
+        window.__GC_BRIDGE_ID = state.bridgeId;
         setBridgeLabel(state.bridgeId ? 'bridge: connected' : 'bridge: no id');
         applySnapshot(d.payload?.snapshot);
         send('GC_READY', { at: Date.now(), userAgent: navigator.userAgent.slice(0, 80) });
@@ -477,7 +486,20 @@
         if (gameIframe) postToGameFrame(gameIframe, 'GC_SNAPSHOT', d.payload);
         return;
       }
+      if (d.type === 'GC_SIGNALING_RESPONSE') {
+        const gameIframe = document.querySelector(
+          '.bt-game-frame'
+        );
 
+        if (gameIframe) {
+          postToGameFrame(
+            gameIframe,
+            'GC_SIGNALING_RESPONSE',
+            d.payload || {}
+          );
+        }
+        return;
+      }
       if (d.type === 'GC_RESTORE_GAME') {
         restoreActiveGame(d.payload?.gameId || state.activeGameId || 'war_hearts');
         return;
@@ -552,8 +574,15 @@
       if (d.kind !== 'vitrina:game') return;
 
       const gameIframe = document.querySelector('.bt-game-frame');
+      if (
+        gameIframe?.contentWindow &&
+        e.source !== gameIframe.contentWindow
+      ) return;
       const gameId = d.gameId || d.payload?.gameId || gameIframe?.dataset?.gameId || state.activeGameId || '';
-
+      if (d.type === 'GC_SIGNALING_REQUEST') {
+        send('GC_SIGNALING_REQUEST', d.payload || {});
+        return;
+      }
       if (d.type === 'GC_CLOSE') {
         closeGameHost();
         return;
