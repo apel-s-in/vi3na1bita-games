@@ -62,7 +62,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 21:39:40 UTC
+Сгенерировано: 2026-07-20 22:11:29 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -764,9 +764,12 @@ Important:
     `;
 
     try {
-      const module = await import(
-        './common/friends-embed.js?v=8.9.2'
-      );
+      const moduleUrl = new URL(
+        './common/friends-embed.js?v=8.9.3',
+        document.baseURI
+      ).href;
+
+      const module = await import(moduleUrl);
 
       state.friendsEmbed?.destroy?.();
 
