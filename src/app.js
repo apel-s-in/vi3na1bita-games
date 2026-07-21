@@ -157,7 +157,7 @@
 
     try {
       const moduleUrl = new URL(
-        './common/friends-embed.js?v=8.9.3',
+        './common/friends-embed.js?v=8.9.4',
         document.baseURI
       ).href;
 
@@ -168,7 +168,7 @@
       state.friendsEmbed = await module.mountCanonicalFriends({
         root: panel.querySelector('.bt-friends-host'),
         identity: state.snapshot?.friend || {},
-        build: '8.9.3',
+        build: '8.9.4',
         onGameInvite: ({ friendId, gameId }) => {
           closePanel();
 
