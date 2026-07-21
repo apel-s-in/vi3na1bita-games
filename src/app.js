@@ -59,6 +59,13 @@
     }
   };
 
+  const getGameCapability = gameId =>
+    String(
+      state.capabilities.games?.[
+        String(gameId || '').trim()
+      ] || ''
+    );
+
   const showToast = text => {
     const toast = $('toast');
     if (!toast) return;
@@ -303,6 +310,7 @@
       postToGameFrame(existingFrame, 'GC_INIT', {
         bridgeId: state.bridgeId,
         gameId: game.id,
+        capabilityToken: getGameCapability(game.id),
         snapshot: state.snapshot,
         at: Date.now()
       });
@@ -548,7 +556,31 @@
           '';
 
         window.__GC_BRIDGE_ID = state.bridgeId;
-        setBridgeLabel(state.bridgeId ? 'bridge: connected' : 'bridge: no id');
+
+        const capabilities =
+          d.payload?.capabilities &&
+          typeof d.payload.capabilities === 'object'
+            ? d.payload.capabilities
+            : {};
+
+        state.capabilities = {
+          tower: String(capabilities.tower || ''),
+          games:
+            capabilities.games &&
+            typeof capabilities.games === 'object'
+              ? { ...capabilities.games }
+              : {}
+        };
+
+        window.__GC_CAPABILITY_TOKEN =
+          state.capabilities.tower;
+
+        setBridgeLabel(
+          state.bridgeId
+            ? 'bridge: connected'
+            : 'bridge: no id'
+        );
+
         applySnapshot(d.payload?.snapshot);
         send('GC_READY', { at: Date.now(), userAgent: navigator.userAgent.slice(0, 80) });
         send('GC_REQUEST_SNAPSHOT');
@@ -688,14 +720,14 @@
         gameIframe?.contentWindow &&
         e.source !== gameIframe.contentWindow
       ) return;
-      const gameId = d.gameId || d.payload?.gameId || gameIframe?.dataset?.gameId || state.activeGameId || '';
+      const gameId =
+        gameIframe?.dataset?.gameId ||
+        state.activeGameId ||
+        '';
       if (d.type === 'GC_SIGNALING_REQUEST') {
         send('GC_SIGNALING_REQUEST', {
           ...(d.payload || {}),
-          capabilityToken:
-            d.capabilityToken ||
-            d.payload?.capabilityToken ||
-            ''
+          capabilityToken: getGameCapability(gameId)
         });
         return;
       }
@@ -703,10 +735,7 @@
       if (d.type === 'GC_FRIENDS_REQUEST') {
         send('GC_FRIENDS_REQUEST', {
           ...(d.payload || {}),
-          capabilityToken:
-            d.capabilityToken ||
-            d.payload?.capabilityToken ||
-            ''
+          capabilityToken: getGameCapability(gameId)
         });
         return;
       }
@@ -730,10 +759,7 @@
       if (d.type === 'GC_SAVE_DATA') {
         send('GC_SAVE_DATA', {
           ...(d.payload || {}),
-          capabilityToken:
-            d.capabilityToken ||
-            d.payload?.capabilityToken ||
-            ''
+          capabilityToken: getGameCapability(gameId)
         });
         return;
       }
