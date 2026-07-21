@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 10:03:12 UTC
+Сгенерировано: 2026-07-21 10:03:49 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2142,6 +2142,14 @@ jobs:
 
           if grep -REn "playerCore.*(play|pause|stop|seek|next|prev|setVolume|setMuted)" src common; then
             echo "Game Center attempts to control music playback"
+            exit 2
+          fi
+
+          grep -q "window.__GC_CAPABILITY_TOKEN" src/app.js
+          grep -q "getGameCapability(gameId)" src/app.js
+
+          if grep -REn "capabilityToken:[[:space:]]*d\.(capabilityToken|payload)" src/app.js; then
+            echo "Child-controlled capability token found"
             exit 2
           fi
 
