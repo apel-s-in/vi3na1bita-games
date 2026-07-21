@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 09:11:03 UTC
+Сгенерировано: 2026-07-21 09:11:34 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2163,11 +2163,19 @@ const postToHost = (type, payload = {}) => {
     return false;
   }
 
+  const capabilityToken = safe(
+    window.__GC_CAPABILITY_TOKEN
+  );
+
   window.parent.postMessage({
     kind: 'vitrina:game',
     bridgeId,
+    capabilityToken,
     type,
-    payload
+    payload: {
+      ...payload,
+      capabilityToken
+    }
   }, '*');
 
   return true;
