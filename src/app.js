@@ -25,7 +25,11 @@
     screen: 'tower',
     activeGameId: '',
     touchY: 0,
-    friendsEmbed: null
+    friendsEmbed: null,
+    capabilities: {
+      tower: '',
+      games: {}
+    }
   };
 
   const isStandalone = () => window.parent === window;
@@ -340,6 +344,8 @@
       postToGameFrame(frame, 'GC_INIT', {
         bridgeId: state.bridgeId,
         gameId: game.id,
+        capabilityToken:
+          state.capabilities.games?.[game.id] || '',
         snapshot: state.snapshot,
         at: Date.now()
       });
@@ -387,6 +393,8 @@
         postToGameFrame(frame, 'GC_INIT', {
           bridgeId: state.bridgeId,
           gameId: activeId,
+          capabilityToken:
+            state.capabilities.games?.[activeId] || '',
           snapshot: state.snapshot,
           at: Date.now()
         });
@@ -673,12 +681,24 @@
       ) return;
       const gameId = d.gameId || d.payload?.gameId || gameIframe?.dataset?.gameId || state.activeGameId || '';
       if (d.type === 'GC_SIGNALING_REQUEST') {
-        send('GC_SIGNALING_REQUEST', d.payload || {});
+        send('GC_SIGNALING_REQUEST', {
+          ...(d.payload || {}),
+          capabilityToken:
+            d.capabilityToken ||
+            d.payload?.capabilityToken ||
+            ''
+        });
         return;
       }
 
       if (d.type === 'GC_FRIENDS_REQUEST') {
-        send('GC_FRIENDS_REQUEST', d.payload || {});
+        send('GC_FRIENDS_REQUEST', {
+          ...(d.payload || {}),
+          capabilityToken:
+            d.capabilityToken ||
+            d.payload?.capabilityToken ||
+            ''
+        });
         return;
       }
       if (d.type === 'GC_CLOSE') {
@@ -699,7 +719,13 @@
       }
 
       if (d.type === 'GC_SAVE_DATA') {
-        send('GC_SAVE_DATA', d.payload);
+        send('GC_SAVE_DATA', {
+          ...(d.payload || {}),
+          capabilityToken:
+            d.capabilityToken ||
+            d.payload?.capabilityToken ||
+            ''
+        });
         return;
       }
 
@@ -717,6 +743,10 @@
             postToGameFrame(gameIframe, 'GC_INIT', {
               bridgeId: state.bridgeId,
               gameId: state.activeGameId,
+              capabilityToken:
+                state.capabilities.games?.[
+                  state.activeGameId
+                ] || '',
               snapshot: state.snapshot,
               at: Date.now()
             });
