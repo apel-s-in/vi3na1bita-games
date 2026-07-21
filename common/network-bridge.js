@@ -288,6 +288,16 @@ export class NetworkBridge {
     });
   }
 
+  async abortRankedMatch({
+    matchId,
+    reason = 'disconnect'
+  } = {}) {
+    return this._req('ranked_match_abort', {
+      matchId: safe(matchId),
+      reason: safe(reason)
+    });
+  }
+
   async getProfile(friendId) {
     const result = await this._req('profile_get', {
       friendId: safe(friendId)
