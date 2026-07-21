@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 08:21:13 UTC
+Сгенерировано: 2026-07-21 09:10:32 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -634,7 +634,11 @@ Important:
     screen: 'tower',
     activeGameId: '',
     touchY: 0,
-    friendsEmbed: null
+    friendsEmbed: null,
+    capabilities: {
+      tower: '',
+      games: {}
+    }
   };
 
   const isStandalone = () => window.parent === window;
@@ -949,6 +953,8 @@ Important:
       postToGameFrame(frame, 'GC_INIT', {
         bridgeId: state.bridgeId,
         gameId: game.id,
+        capabilityToken:
+          state.capabilities.games?.[game.id] || '',
         snapshot: state.snapshot,
         at: Date.now()
       });
@@ -996,6 +1002,8 @@ Important:
         postToGameFrame(frame, 'GC_INIT', {
           bridgeId: state.bridgeId,
           gameId: activeId,
+          capabilityToken:
+            state.capabilities.games?.[activeId] || '',
           snapshot: state.snapshot,
           at: Date.now()
         });
@@ -1282,12 +1290,24 @@ Important:
       ) return;
       const gameId = d.gameId || d.payload?.gameId || gameIframe?.dataset?.gameId || state.activeGameId || '';
       if (d.type === 'GC_SIGNALING_REQUEST') {
-        send('GC_SIGNALING_REQUEST', d.payload || {});
+        send('GC_SIGNALING_REQUEST', {
+          ...(d.payload || {}),
+          capabilityToken:
+            d.capabilityToken ||
+            d.payload?.capabilityToken ||
+            ''
+        });
         return;
       }
 
       if (d.type === 'GC_FRIENDS_REQUEST') {
-        send('GC_FRIENDS_REQUEST', d.payload || {});
+        send('GC_FRIENDS_REQUEST', {
+          ...(d.payload || {}),
+          capabilityToken:
+            d.capabilityToken ||
+            d.payload?.capabilityToken ||
+            ''
+        });
         return;
       }
       if (d.type === 'GC_CLOSE') {
@@ -1308,7 +1328,13 @@ Important:
       }
 
       if (d.type === 'GC_SAVE_DATA') {
-        send('GC_SAVE_DATA', d.payload);
+        send('GC_SAVE_DATA', {
+          ...(d.payload || {}),
+          capabilityToken:
+            d.capabilityToken ||
+            d.payload?.capabilityToken ||
+            ''
+        });
         return;
       }
 
@@ -1326,6 +1352,10 @@ Important:
             postToGameFrame(gameIframe, 'GC_INIT', {
               bridgeId: state.bridgeId,
               gameId: state.activeGameId,
+              capabilityToken:
+                state.capabilities.games?.[
+                  state.activeGameId
+                ] || '',
               snapshot: state.snapshot,
               at: Date.now()
             });
