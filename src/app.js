@@ -21,10 +21,8 @@
   const state = {
     bridgeId: '',
     snapshot: null,
-    mode: 'play',
     screen: 'tower',
     activeGameId: '',
-    touchY: 0,
     friendsEmbed: null,
     capabilities: {
       tower: '',
@@ -660,12 +658,11 @@
     const scene = $('scene');
     if (!scene) return;
 
-    scene.addEventListener('wheel', e => {
-      send('GC_PARENT_SCROLL', { deltaY: e.deltaY, at: Date.now() });
-    }, { passive: true });
-
-    scene.addEventListener('touchstart', e => {
-      state.touchY = e.touches?.[0]?.clientY || 0;
+    scene.addEventListener('wheel', event => {
+      send('GC_PARENT_SCROLL', {
+        deltaY: event.deltaY,
+        at: Date.now()
+      });
     }, { passive: true });
   };
 
