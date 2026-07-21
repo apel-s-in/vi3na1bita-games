@@ -39,6 +39,14 @@ jobs:
             exit 2
           fi
 
+          grep -q "window.__GC_CAPABILITY_TOKEN" src/app.js
+          grep -q "getGameCapability(gameId)" src/app.js
+
+          if grep -REn "capabilityToken:[[:space:]]*d\.(capabilityToken|payload)" src/app.js; then
+            echo "Child-controlled capability token found"
+            exit 2
+          fi
+
       - name: Validate canonical Friends embedding
         run: |
           if grep -RFn "import('./common/friends-embed" src; then
