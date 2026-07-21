@@ -69,11 +69,17 @@ const requestHost = (action, data = {}) => {
     window.parent.postMessage({
       kind: 'vitrina:game',
       bridgeId,
+      capabilityToken: safe(
+        window.__GC_CAPABILITY_TOKEN
+      ),
       type: 'GC_SIGNALING_REQUEST',
       payload: {
         requestId,
         action,
-        data
+        data,
+        capabilityToken: safe(
+          window.__GC_CAPABILITY_TOKEN
+        )
       }
     }, '*');
   });
