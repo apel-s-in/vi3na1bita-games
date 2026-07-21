@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 11:29:54 UTC
+Сгенерировано: 2026-07-21 12:47:12 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1448,22 +1448,8 @@ Important:
 
 *{box-sizing:border-box}
 
-html,
-body{
-  width:100%;
-  height:100%;
-  margin:0;
-  background:#03040c;
-  color:var(--bt-white);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;.bt-enter-game{
-  overflow:hidden;
-  overscroll-behavior:none;
-}
-
-body{
-  position:fixed;
-  inset:0;
-}
+html,body{width:100%;height:100%;margin:0;background:#03040c;color:var(--bt-white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0}
 
 button{
   font:inherit;
@@ -1640,8 +1626,7 @@ body[data-mode="play"] .bt-hotspot{
 }
 
 .bt-hotspot:focus-visible,
-.bt-nav-item:focus-visible,
-.bt-enter-game:focus-visible{
+.bt-nav-item:focus-visible{
   outline:2px solid rgba(37,232,255,.95);
   outline-offset:2px;
   box-shadow:0 0 24px rgba(37,232,255,.35);
@@ -2000,7 +1985,6 @@ body[data-mode="play"] .bt-toast{
 }
 
 @media(prefers-reduced-motion:reduce){
-  .bt-enter-game,
   .bt-toast:not([hidden]),
   .bt-topbar,
   .bt-nav{
