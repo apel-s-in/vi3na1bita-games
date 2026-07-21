@@ -357,8 +357,7 @@
       postToGameFrame(frame, 'GC_INIT', {
         bridgeId: state.bridgeId,
         gameId: game.id,
-        capabilityToken:
-          state.capabilities.games?.[game.id] || '',
+        capabilityToken: getGameCapability(game.id),
         snapshot: state.snapshot,
         at: Date.now()
       });
@@ -406,8 +405,7 @@
         postToGameFrame(frame, 'GC_INIT', {
           bridgeId: state.bridgeId,
           gameId: activeId,
-          capabilityToken:
-            state.capabilities.games?.[activeId] || '',
+          capabilityToken: getGameCapability(activeId),
           snapshot: state.snapshot,
           at: Date.now()
         });
@@ -774,9 +772,7 @@
               bridgeId: state.bridgeId,
               gameId: state.activeGameId,
               capabilityToken:
-                state.capabilities.games?.[
-                  state.activeGameId
-                ] || '',
+                getGameCapability(state.activeGameId),
               snapshot: state.snapshot,
               at: Date.now()
             });
