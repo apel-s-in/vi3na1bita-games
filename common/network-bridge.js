@@ -272,6 +272,12 @@ export class NetworkBridge {
     });
   }
 
+  async prepareRankedStake(matchId) {
+    return this._req('ranked_stake_prepare', {
+      matchId: safe(matchId)
+    });
+  }
+
   async commitRankedRps({
     matchId,
     round,
