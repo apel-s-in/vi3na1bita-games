@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 10:03:49 UTC
+Сгенерировано: 2026-07-21 10:08:50 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -722,9 +722,7 @@ Important:
   const applySnapshot = snapshot => {
     state.snapshot = snapshot || state.snapshot || {};
 
-    const progress = state.snapshot?.progress || {};
     const user = state.snapshot?.user || {};
-
     const wallet = state.snapshot?.wallet || {};
     const shards = $('shards-count');
 
