@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 11:12:55 UTC
+Сгенерировано: 2026-07-21 11:25:09 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2145,6 +2145,10 @@ jobs:
 
           grep -q "window.__GC_CAPABILITY_TOKEN" src/app.js
           grep -q "getGameCapability(gameId)" src/app.js
+          grep -q "ranked_match_prepare" common/network-bridge.js
+          grep -q "ranked_match_submit" common/network-bridge.js
+          grep -q "ranked_match_status" common/network-bridge.js
+          grep -q "leaderboard_v2_get" common/network-bridge.js
 
           if grep -REn "capabilityToken:[[:space:]]*d\.(capabilityToken|payload)" src/app.js; then
             echo "Child-controlled capability token found"
