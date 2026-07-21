@@ -4,8 +4,6 @@
  * Используется из /Games/war_hearts/ и будущих игр.
  */
 
-const DEFAULT_SIGNALING_URL = 'https://functions.yandexcloud.net/d4e2epg33mkshjoar6av';
-
 const safe = v => String(v == null ? '' : v).trim();
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const jsonParse = raw => {
@@ -256,25 +254,6 @@ export class NetworkBridge {
       deviceId: 'web',
       gameId: this.gameId,
       roomId: this.roomId || ''
-    });
-  }
-
-  async checkFriend(targetId) {
-    const res = await this._req('friend_status_check', { targetId });
-    return !!res.online;
-  }
-
-  async createFriendInvite() {
-    return this._req('friend_invite_create', {
-      displayName: this.displayName
-    });
-  }
-
-  async acceptFriendInvite({ inviteId, secret }) {
-    return this._req('friend_invite_accept', {
-      inviteId,
-      secret,
-      displayName: this.displayName
     });
   }
 
@@ -680,10 +659,7 @@ export class NetworkBridge {
   }
 
   stopPolling() {
-    if (this.pollTimer) {
-      clearTimeout(this.pollTimer);
-      clearInterval(this.pollTimer);
-    }
+    clearTimeout(this.pollTimer);
     this.pollTimer = 0;
   }
 
