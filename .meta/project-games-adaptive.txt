@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-20 23:21:03 UTC
+Сгенерировано: 2026-07-21 08:19:38 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -766,7 +766,7 @@ Important:
 
     try {
       const moduleUrl = new URL(
-        './common/friends-embed.js?v=8.9.3',
+        './common/friends-embed.js?v=8.9.4',
         document.baseURI
       ).href;
 
@@ -777,7 +777,7 @@ Important:
       state.friendsEmbed = await module.mountCanonicalFriends({
         root: panel.querySelector('.bt-friends-host'),
         identity: state.snapshot?.friend || {},
-        build: '8.9.3',
+        build: '8.9.4',
         onGameInvite: ({ friendId, gameId }) => {
           closePanel();
 
