@@ -112,6 +112,7 @@ export class NetworkBridge {
 
     this.roomId = '';
     this.roomSecret = '';
+    this.joinToken = '';
     this.peerId = '';
     this.remotePeerId = '';
     this.role = '';
@@ -294,12 +295,27 @@ export class NetworkBridge {
     roomId,
     roomSecret
   } = {}) {
+    if (
+      roomId &&
+      roomSecret &&
+      (
+        this.roomId !== roomId ||
+        this.roomSecret !== roomSecret
+      )
+    ) {
+      this.roomId = safe(roomId);
+      this.roomSecret = safe(roomSecret);
+    }
+
+    const join = await this.createJoinToken({
+      invitedPlayerId: toFriendId
+    });
+
     return this._req('push_send', {
       toFriendId: safe(toFriendId),
       kind: 'GAME_INVITE',
       gameId: safe(gameId),
-      roomId: safe(roomId),
-      roomSecret: safe(roomSecret)
+      joinToken: join.token
     });
   }
 
@@ -357,6 +373,9 @@ export class NetworkBridge {
     this.peerId = res.hostPeerId;
     this.remotePeerId = res.guestPeerId;
 
+    const join = await this.createJoinToken();
+    this.joinToken = join.token;
+
     this.onRoom({
       role: this.role,
       roomId: this.roomId,
@@ -368,6 +387,20 @@ export class NetworkBridge {
       ...res,
       joinUrl: this.buildJoinUrl()
     };
+  }
+
+  async createJoinToken({
+    invitedPlayerId = ''
+  } = {}) {
+    if (!this.roomId || !this.roomSecret) {
+      throw new Error('room_required');
+    }
+
+    return this._req('room_join_token_create', {
+      roomId: this.roomId,
+      roomSecret: this.roomSecret,
+      invitedPlayerId: safe(invitedPlayerId)
+    });
   }
 
   async joinRoom({ roomId, roomSecret }) {
@@ -391,11 +424,14 @@ export class NetworkBridge {
     return res;
   }
 
-  buildJoinUrl() {
+  buildJoinUrl(joinToken = this.joinToken) {
     const u = new URL('/Games/', window.location.href);
     u.searchParams.set('gcGame', this.gameId);
-    u.searchParams.set('room', this.roomId);
-    u.searchParams.set('key', this.roomSecret);
+
+    if (joinToken) {
+      u.searchParams.set('join', joinToken);
+    }
+
     return u.toString();
   }
 
@@ -732,11 +768,40 @@ export class NetworkBridge {
   }
 
   async connectFromUrl() {
-    const u = new URL(window.location.href);
-    const roomId = u.searchParams.get('room');
-    const roomSecret = u.searchParams.get('key') || u.searchParams.get('secret');
-    if (!roomId || !roomSecret) return false;
-    await this.connectAsGuest({ roomId, roomSecret });
+    const url = new URL(window.location.href);
+    const joinToken = safe(
+      url.searchParams.get('join')
+    );
+
+    if (!joinToken) return false;
+
+    const redeemed = await this._req(
+      'room_join_token_redeem',
+      { joinToken }
+    );
+
+    if (
+      !redeemed?.roomId ||
+      !redeemed?.roomSecret
+    ) {
+      throw new Error(
+        redeemed?.reason ||
+        'room_join_token_invalid'
+      );
+    }
+
+    await this.connectAsGuest({
+      roomId: redeemed.roomId,
+      roomSecret: redeemed.roomSecret
+    });
+
+    url.searchParams.delete('join');
+    window.history.replaceState(
+      null,
+      '',
+      url.toString()
+    );
+
     return true;
   }
 
@@ -856,6 +921,7 @@ async close() {
     this.connected = false;
     this.roomId = '';
     this.roomSecret = '';
+    this.joinToken = '';
     this.peerId = '';
     this.remotePeerId = '';
     this.role = '';
