@@ -317,10 +317,19 @@
 
       launchUrl.searchParams.set('host', 'game_center');
 
-      if (params.get('room')) launchUrl.searchParams.set('room', params.get('room'));
-      if (params.get('key')) launchUrl.searchParams.set('key', params.get('key'));
-      if (params.get('secret')) launchUrl.searchParams.set('key', params.get('secret'));
-      if (params.get('inviteFriend')) launchUrl.searchParams.set('inviteFriend', params.get('inviteFriend'));
+      if (params.get('join')) {
+        launchUrl.searchParams.set(
+          'join',
+          params.get('join')
+        );
+      }
+
+      if (params.get('inviteFriend')) {
+        launchUrl.searchParams.set(
+          'inviteFriend',
+          params.get('inviteFriend')
+        );
+      }
 
     const safeLaunchUrl = launchUrl.toString().replace(/"/g, '&quot;');
     const safeTitle = game.title.replace(/"/g, '&quot;');
@@ -769,7 +778,7 @@
       launchParams.get('gcGame') === 'war_hearts' || launchParams.get('game') === 'war_hearts'
     ) {
       if (
-        (launchParams.get('room') && (launchParams.get('key') || launchParams.get('secret'))) ||
+        launchParams.get('join') ||
         launchParams.get('inviteFriend')
       ) {
         setTimeout(() => openGame('war_hearts'), 120);
