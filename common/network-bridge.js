@@ -272,6 +272,32 @@ export class NetworkBridge {
     });
   }
 
+  async commitRankedRps({
+    matchId,
+    round,
+    commit
+  } = {}) {
+    return this._req('ranked_rps_commit', {
+      matchId: safe(matchId),
+      round: Number(round || 1),
+      commit: safe(commit)
+    });
+  }
+
+  async revealRankedRps({
+    matchId,
+    round,
+    choice,
+    salt
+  } = {}) {
+    return this._req('ranked_rps_reveal', {
+      matchId: safe(matchId),
+      round: Number(round || 1),
+      choice: safe(choice),
+      salt: safe(salt)
+    });
+  }
+
   async submitRankedMatch({
     matchId,
     submission
