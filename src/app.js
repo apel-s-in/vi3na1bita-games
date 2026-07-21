@@ -113,9 +113,7 @@
   const applySnapshot = snapshot => {
     state.snapshot = snapshot || state.snapshot || {};
 
-    const progress = state.snapshot?.progress || {};
     const user = state.snapshot?.user || {};
-
     const wallet = state.snapshot?.wallet || {};
     const shards = $('shards-count');
 
