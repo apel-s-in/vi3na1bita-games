@@ -33,11 +33,19 @@ const postToHost = (type, payload = {}) => {
     return false;
   }
 
+  const capabilityToken = safe(
+    window.__GC_CAPABILITY_TOKEN
+  );
+
   window.parent.postMessage({
     kind: 'vitrina:game',
     bridgeId,
+    capabilityToken,
     type,
-    payload
+    payload: {
+      ...payload,
+      capabilityToken
+    }
   }, '*');
 
   return true;
