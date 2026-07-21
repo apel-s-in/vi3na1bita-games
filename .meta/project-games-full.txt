@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 14:25:05 UTC
+Сгенерировано: 2026-07-21 15:00:48 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2641,6 +2641,16 @@ export class NetworkBridge {
   async getRankedMatchStatus(matchId) {
     return this._req('ranked_match_status', {
       matchId: safe(matchId)
+    });
+  }
+
+  async abortRankedMatch({
+    matchId,
+    reason = 'disconnect'
+  } = {}) {
+    return this._req('ranked_match_abort', {
+      matchId: safe(matchId),
+      reason: safe(reason)
     });
   }
 
