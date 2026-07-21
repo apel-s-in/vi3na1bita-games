@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 15:00:48 UTC
+Сгенерировано: 2026-07-21 19:07:47 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2625,6 +2625,32 @@ export class NetworkBridge {
     return this._req('ranked_match_prepare', {
       roomId: this.roomId,
       roomSecret: this.roomSecret
+    });
+  }
+
+  async commitRankedRps({
+    matchId,
+    round,
+    commit
+  } = {}) {
+    return this._req('ranked_rps_commit', {
+      matchId: safe(matchId),
+      round: Number(round || 1),
+      commit: safe(commit)
+    });
+  }
+
+  async revealRankedRps({
+    matchId,
+    round,
+    choice,
+    salt
+  } = {}) {
+    return this._req('ranked_rps_reveal', {
+      matchId: safe(matchId),
+      round: Number(round || 1),
+      choice: safe(choice),
+      salt: safe(salt)
     });
   }
 
