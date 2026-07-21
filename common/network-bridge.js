@@ -258,7 +258,34 @@ export class NetworkBridge {
   }
 
   async getLeaderboard() {
-    return this._req('leaderboard_get', {});
+    return this._req('leaderboard_v2_get', {});
+  }
+
+  async prepareRankedMatch() {
+    if (!this.roomId || !this.roomSecret) {
+      throw new Error('room_required');
+    }
+
+    return this._req('ranked_match_prepare', {
+      roomId: this.roomId,
+      roomSecret: this.roomSecret
+    });
+  }
+
+  async submitRankedMatch({
+    matchId,
+    submission
+  } = {}) {
+    return this._req('ranked_match_submit', {
+      matchId: safe(matchId),
+      submission
+    });
+  }
+
+  async getRankedMatchStatus(matchId) {
+    return this._req('ranked_match_status', {
+      matchId: safe(matchId)
+    });
   }
 
   async getProfile(friendId) {
