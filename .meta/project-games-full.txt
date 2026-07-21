@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-21 12:47:12 UTC
+Сгенерировано: 2026-07-21 12:49:10 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -630,10 +630,8 @@ Important:
   const state = {
     bridgeId: '',
     snapshot: null,
-    mode: 'play',
     screen: 'tower',
     activeGameId: '',
-    touchY: 0,
     friendsEmbed: null,
     capabilities: {
       tower: '',
@@ -1269,12 +1267,11 @@ Important:
     const scene = $('scene');
     if (!scene) return;
 
-    scene.addEventListener('wheel', e => {
-      send('GC_PARENT_SCROLL', { deltaY: e.deltaY, at: Date.now() });
-    }, { passive: true });
-
-    scene.addEventListener('touchstart', e => {
-      state.touchY = e.touches?.[0]?.clientY || 0;
+    scene.addEventListener('wheel', event => {
+      send('GC_PARENT_SCROLL', {
+        deltaY: event.deltaY,
+        at: Date.now()
+      });
     }, { passive: true });
   };
 
