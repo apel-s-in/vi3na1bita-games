@@ -42,6 +42,7 @@ jobs:
           grep -q "window.__GC_CAPABILITY_TOKEN" src/app.js
           grep -q "getGameCapability(gameId)" src/app.js
           grep -q "ranked_match_prepare" common/network-bridge.js
+          grep -q "ranked_stake_prepare" common/network-bridge.js
           grep -q "ranked_rps_commit" common/network-bridge.js
           grep -q "ranked_rps_reveal" common/network-bridge.js
           grep -q "ranked_match_submit" common/network-bridge.js
