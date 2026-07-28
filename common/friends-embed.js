@@ -79,6 +79,11 @@ const requestHost = (method, args = []) => {
 };
 
 window.addEventListener('message', event => {
+  if (
+    window.parent !== window &&
+    event.source !== window.parent
+  ) return;
+
   const data = event.data || {};
 
   if (
