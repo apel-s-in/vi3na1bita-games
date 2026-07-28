@@ -360,12 +360,12 @@
           <div class="bt-game-icon">💔</div>
           <div class="bt-game-info">
             <h3>Война Сердец</h3>
-            <p>Морской бой 10×10 в стилистике разбитых сердец. Дуэль, чат, голос и режим против компьютера.</p>
+            <p>Морской бой 10×10. Рейтинговые P2P-дуэли за 100 Осколков и отдельная тренировка с компьютером.</p>
             <div class="bt-game-tags">
-              <span>P2P</span>
+              <span>Ranked P2P</span>
+              <span>100 ♦</span>
               <span>10×10</span>
-              <span>Voice</span>
-              <span>Demo AI</span>
+              <span>Training AI</span>
             </div>
           </div>
           <div class="bt-game-arrow">›</div>
