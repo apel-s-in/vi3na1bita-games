@@ -7,18 +7,28 @@ on:
       - '.meta/**'
       - '.github/workflows/generate-context.yml'
   workflow_dispatch:
+    inputs:
+      full_sync:
+        description: 'Полностью синхронизировать Game Center без Games/war_hearts'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
 
 concurrency:
   group: yc-s3-games-deploy-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Incremental deploy public files
         env:
@@ -26,77 +36,322 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ru-central1
           BEFORE_SHA: ${{ github.event.before }}
+          FULL_SYNC: ${{ inputs.full_sync || false }}
+          EVENT_NAME: ${{ github.event_name }}
           BUCKET: vi3na1bita
           PREFIX: Games
         run: |
           set -euo pipefail
 
+          upload_count=0
+          delete_count=0
+          mode="incremental"
+          sync_used="false"
+
           is_public_file() {
-            case "$1" in
-              .git/*|.github/*|.meta/*|generate-context.js|ai-rules.txt|README.md|war_hearts/*) return 1 ;;
-              *) return 0 ;;
+            local file="$1"
+
+            case "$file" in
+              war_hearts|war_hearts/*|war_hearts/**)
+                return 1
+                ;;
+              .nojekyll|index.html|styles.css)
+                return 0
+                ;;
+              assets/*.json|assets/**/*.json)
+                return 0
+                ;;
+              assets/*.svg|assets/**/*.svg)
+                return 0
+                ;;
+              assets/*.webp|assets/**/*.webp)
+                return 0
+                ;;
+              assets/*.png|assets/**/*.png)
+                return 0
+                ;;
+              assets/*.jpg|assets/**/*.jpg)
+                return 0
+                ;;
+              assets/*.jpeg|assets/**/*.jpeg)
+                return 0
+                ;;
+              common/*.js|common/**/*.js)
+                return 0
+                ;;
+              common/*.mjs|common/**/*.mjs)
+                return 0
+                ;;
+              src/*.js|src/**/*.js)
+                return 0
+                ;;
+              src/*.mjs|src/**/*.mjs)
+                return 0
+                ;;
+              src/*.json|src/**/*.json)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
             esac
           }
 
           upload_file() {
-            local f="$1"
-            [ -f "$f" ] || return 0
-            is_public_file "$f" || return 0
+            local file="$1"
 
-            local ct="application/octet-stream"
-            local cc="public, max-age=300"
-            case "$f" in
-              *.html) ct="text/html; charset=utf-8"; cc="no-cache, no-store, must-revalidate" ;;
-              *.css) ct="text/css; charset=utf-8" ;;
-              *.js|*.mjs) ct="application/javascript; charset=utf-8"; cc="public, max-age=120" ;;
-              *.json) ct="application/json; charset=utf-8" ;;
-              *.svg) ct="image/svg+xml" ;;
-              *.webp|*.png|*.jpg) ct="image/${f##*.}"; cc="public, max-age=86400" ;;
+            [ -f "$file" ] || return 0
+            is_public_file "$file" || return 0
+
+            local content_type="application/octet-stream"
+            local cache_control="public, max-age=300, must-revalidate"
+
+            case "$file" in
+              index.html)
+                content_type="text/html; charset=utf-8"
+                cache_control="no-cache, no-store, must-revalidate"
+                ;;
+              styles.css)
+                content_type="text/css; charset=utf-8"
+                cache_control="public, max-age=300, must-revalidate"
+                ;;
+              src/app.js)
+                content_type="application/javascript; charset=utf-8"
+                cache_control="no-cache, no-store, must-revalidate"
+                ;;
+              *.js|*.mjs)
+                content_type="application/javascript; charset=utf-8"
+                cache_control="public, max-age=300, must-revalidate"
+                ;;
+              *.json)
+                content_type="application/json; charset=utf-8"
+                cache_control="public, max-age=300, must-revalidate"
+                ;;
+              *.svg)
+                content_type="image/svg+xml"
+                cache_control="public, max-age=86400"
+                ;;
+              *.webp)
+                content_type="image/webp"
+                cache_control="public, max-age=31536000, immutable"
+                ;;
+              *.png)
+                content_type="image/png"
+                cache_control="public, max-age=31536000, immutable"
+                ;;
+              *.jpg|*.jpeg)
+                content_type="image/jpeg"
+                cache_control="public, max-age=31536000, immutable"
+                ;;
+              .nojekyll)
+                content_type="text/plain; charset=utf-8"
+                cache_control="no-cache"
+                ;;
             esac
 
-            echo "PUT $f"
-            aws --endpoint-url=https://storage.yandexcloud.net s3 cp "$f" "s3://$BUCKET/$PREFIX/$f" \
+            echo "PUT $file"
+
+            aws \
+              --endpoint-url=https://storage.yandexcloud.net \
+              s3 cp \
+              "$file" \
+              "s3://$BUCKET/$PREFIX/$file" \
               --only-show-errors \
-              --cache-control "$cc" \
-              --content-type "$ct"
+              --cache-control "$cache_control" \
+              --content-type "$content_type"
+
+            upload_count=$((upload_count + 1))
           }
 
           delete_file() {
-            local f="$1"
-            is_public_file "$f" || return 0
-            echo "DELETE $f"
-            aws --endpoint-url=https://storage.yandexcloud.net s3 rm "s3://$BUCKET/$PREFIX/$f" --only-show-errors || true
+            local file="$1"
+
+            is_public_file "$file" || return 0
+
+            echo "DELETE $file"
+
+            aws \
+              --endpoint-url=https://storage.yandexcloud.net \
+              s3 rm \
+              "s3://$BUCKET/$PREFIX/$file" \
+              --only-show-errors \
+              || true
+
+            delete_count=$((delete_count + 1))
           }
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -z "${BEFORE_SHA:-}" ] || [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
-            echo "Manual/initial deploy: full public sync"
-            aws --endpoint-url=https://storage.yandexcloud.net s3 sync ./ "s3://$BUCKET/$PREFIX/" \
-              --delete --only-show-errors \
+          publish_or_delete() {
+            local file="$1"
+
+            if [ -f "$file" ]; then
+              upload_file "$file"
+            else
+              delete_file "$file"
+            fi
+          }
+
+          write_summary() {
+            {
+              echo "## Game Center Object Storage deploy"
+              echo ""
+              echo "- Mode: $mode"
+              echo "- Actor: $GITHUB_ACTOR"
+              echo "- Event: $EVENT_NAME"
+              echo "- Run ID: $GITHUB_RUN_ID"
+              echo "- Commit: $GITHUB_SHA"
+              echo "- Direct PUT operations: $upload_count"
+              echo "- Direct DELETE operations: $delete_count"
+              echo "- S3 sync used: $sync_used"
+              echo "- Destination: s3://$BUCKET/$PREFIX/"
+              echo "- Protected prefix: s3://$BUCKET/$PREFIX/war_hearts/"
+            } >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          base_sha="${BEFORE_SHA:-}"
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$FULL_SYNC" != "true" ]; then
+            base_sha="$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null || true)"
+            echo "Manual incremental deploy: ${base_sha:-missing} -> $GITHUB_SHA"
+          fi
+
+          if [ "$FULL_SYNC" = "true" ]; then
+            mode="full"
+          elif [ -z "$base_sha" ] || [[ "$base_sha" =~ ^0+$ ]]; then
+            mode="full"
+          elif ! git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
+            echo "Base commit is unavailable: $base_sha"
+            echo "Refusing implicit full deploy."
+            echo "Run this workflow manually with full_sync=true if a full repair is required."
+            exit 2
+          fi
+
+          if [ "$mode" = "full" ]; then
+            sync_used="true"
+
+            echo "Explicit/initial full Game Center synchronization"
+            echo "Destination: s3://$BUCKET/$PREFIX/"
+            echo "Protected: s3://$BUCKET/$PREFIX/war_hearts/"
+
+            aws \
+              --endpoint-url=https://storage.yandexcloud.net \
+              s3 sync \
+              ./ \
+              "s3://$BUCKET/$PREFIX/" \
+              --delete \
+              --only-show-errors \
               --exclude "*" \
-              --include "*.html" \
-              --include "*.css" \
-              --include "*.js" \
-              --include "*.json" \
-              --include "*.svg" \
-              --include "*.webp" \
-              --include "*.png" \
-              --include "*.jpg" \
+              --include ".nojekyll" \
+              --include "index.html" \
+              --include "styles.css" \
+              --include "assets/*" \
+              --include "assets/**" \
+              --include "common/*.js" \
+              --include "common/**/*.js" \
+              --include "common/*.mjs" \
+              --include "common/**/*.mjs" \
+              --include "src/*.js" \
+              --include "src/**/*.js" \
+              --include "src/*.mjs" \
+              --include "src/**/*.mjs" \
+              --include "src/*.json" \
+              --include "src/**/*.json" \
               --exclude ".git/*" \
+              --exclude ".git/**" \
               --exclude ".github/*" \
+              --exclude ".github/**" \
               --exclude ".meta/*" \
+              --exclude ".meta/**" \
               --exclude "generate-context.js" \
               --exclude "ai-rules.txt" \
               --exclude "README.md" \
+              --exclude "war_hearts" \
               --exclude "war_hearts/*" \
-              --exclude "war_hearts/**"
+              --exclude "war_hearts/**" \
+              --exclude "common/network-bridge.js" \
+              --exclude "common/friends-embed.js" \
+              --exclude "styles.css" \
+              --exclude "src/app.js" \
+              --exclude "index.html"
+
+            publish_or_delete "common/network-bridge.js"
+            publish_or_delete "common/friends-embed.js"
+            publish_or_delete "styles.css"
+            publish_or_delete "src/app.js"
+            publish_or_delete "index.html"
+
+            write_summary
             exit 0
           fi
 
-          git diff --name-status "$BEFORE_SHA" "$GITHUB_SHA" | while IFS=$'\t' read -r status a b; do
-            file="${b:-$a}"
-            if [[ "$status" == D* ]]; then
-              delete_file "$a"
-            else
+          echo "Incremental Game Center deploy"
+          echo "Base: $base_sha"
+          echo "Head: $GITHUB_SHA"
+
+          mapfile -t changed_files < <(
+            git diff \
+              --no-renames \
+              --name-only \
+              --diff-filter=ACMTUXB \
+              "$base_sha" \
+              "$GITHUB_SHA"
+          )
+
+          mapfile -t deleted_files < <(
+            git diff \
+              --no-renames \
+              --name-only \
+              --diff-filter=D \
+              "$base_sha" \
+              "$GITHUB_SHA"
+          )
+
+          declare -A changed_set=()
+
+          for file in "${changed_files[@]}"; do
+            changed_set["$file"]=1
+          done
+
+          priority_files=(
+            "common/network-bridge.js"
+            "common/friends-embed.js"
+            "styles.css"
+            "src/app.js"
+            "index.html"
+          )
+
+          is_priority_file() {
+            local candidate="$1"
+            local priority
+
+            for priority in "${priority_files[@]}"; do
+              if [ "$candidate" = "$priority" ]; then
+                return 0
+              fi
+            done
+
+            return 1
+          }
+
+          for file in "${changed_files[@]}"; do
+            if is_priority_file "$file"; then
+              continue
+            fi
+
+            upload_file "$file"
+          done
+
+          for file in "${priority_files[@]}"; do
+            if [ -n "${changed_set[$file]+x}" ]; then
               upload_file "$file"
             fi
           done
+
+          for file in "${deleted_files[@]}"; do
+            delete_file "$file"
+          done
+
+          if [ "$upload_count" -eq 0 ] && [ "$delete_count" -eq 0 ]; then
+            echo "No public Game Center files changed"
+          fi
+
+          write_summary
