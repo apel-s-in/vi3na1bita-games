@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 13:16:07 UTC
+Сгенерировано: 2026-07-28 13:29:11 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -966,13 +966,13 @@ Important:
       <div class="bt-friends-host"></div>
     `;
     try {
-      const moduleUrl = new URL('./common/friends-embed.js?v=9.1.8', document.baseURI).href;
+      const moduleUrl = new URL('./common/friends-embed.js?v=9.1.9', document.baseURI).href;
       const module = await import(moduleUrl);
       state.friendsEmbed?.destroy?.();
       state.friendsEmbed = await module.mountCanonicalFriends({
         root: panel.querySelector('.bt-friends-host'),
         identity: state.snapshot?.friend || {},
-        build: '9.1.8',
+        build: '9.1.9',
         onGameInvite: ({ friendId, gameId }) => {
           closePanel();
           const url = new URL(window.location.href);
@@ -1606,11 +1606,11 @@ jobs:
 
 import {
   attachEmbeddedFriendsCoreMethods
-} from 'https://vi3na1bita.website.yandexcloud.net/Friends/embedded-rpc-contract.js?v=9.1.8';
+} from 'https://vi3na1bita.website.yandexcloud.net/Friends/embedded-rpc-contract.js?v=9.1.9';
 
 const FRIENDS_BASE =
   'https://vi3na1bita.website.yandexcloud.net/Friends';
-const DEFAULT_BUILD = '9.1.8';
+const DEFAULT_BUILD = '9.1.9';
 const RPC_TIMEOUT_MS = 20000;
 
 const pending = new Map();
