@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 13:11:09 UTC
+Сгенерировано: 2026-07-28 13:16:07 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2058,6 +2058,9 @@ export class NetworkBridge {
   }
   async getLeaderboard() {
     return this._req('leaderboard_v2_get', {});
+  }
+  async getRankedStats() {
+    return this._req('ranked_stats_get', {});
   }
   async prepareRankedMatch() {
     if (!this.roomId || !this.roomSecret) {
