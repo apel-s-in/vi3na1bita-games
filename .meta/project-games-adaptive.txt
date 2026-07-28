@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 10:01:03 UTC
+Сгенерировано: 2026-07-28 10:48:50 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1888,8 +1888,9 @@ export default {
 
 //=================================================
 // FILE: /common/network-bridge.js
+/**
  * common/network-bridge.js
- * Общий WebRTC + Yandex Cloud Function signaling bridge для всех игр.
+ * Общий WebRTC DataChannel + Yandex Cloud Function signaling bridge.
  * Используется из /Games/war_hearts/ и будущих игр.
  */
 const safe = v => String(v == null ? '' : v).trim();
