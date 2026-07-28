@@ -1,5 +1,6 @@
+/**
  * common/network-bridge.js
- * Общий WebRTC + Yandex Cloud Function signaling bridge для всех игр.
+ * Общий WebRTC DataChannel + Yandex Cloud Function signaling bridge.
  * Используется из /Games/war_hearts/ и будущих игр.
  */
 const safe = v => String(v == null ? '' : v).trim();
