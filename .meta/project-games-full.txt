@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 09:11:17 UTC
+Сгенерировано: 2026-07-28 09:46:32 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2904,14 +2904,33 @@ export class NetworkBridge {
     if (!this.roomId) await this.createRoom();
 
     this.role = 'host';
+
+    if (
+      Object.prototype.hasOwnProperty.call(opts, 'ranked') ||
+      Object.prototype.hasOwnProperty.call(opts, 'forceLocalOnly')
+    ) {
+      const mode = await this.setRoomMode({
+        ranked: this.ranked,
+        localOnly: this.forceLocalOnly
+      });
+
+      this.ranked = !!mode.ranked;
+      this.forceLocalOnly = !!mode.localOnly;
+    }
+
     this._initPeer();
 
-    // В serverless-архитектуре host ждёт offer от guest через signaling.
-    this._startPolling(this.forceLocalOnly ? 180 : 800);
-    this._emitStatus(this.forceLocalOnly ? 'lan waiting' : 'waiting', false, {
-      localOnly: this.forceLocalOnly,
-      ranked: this.ranked
-    });
+    // Даже в LAN-режиме signaling остаётся нужен для обмена SDP/ICE.
+    // Интервал не должен создавать сотни serverless-вызовов в минуту.
+    this._startPolling(this.forceLocalOnly ? 650 : 900);
+    this._emitStatus(
+      this.forceLocalOnly ? 'lan waiting' : 'waiting',
+      false,
+      {
+        localOnly: this.forceLocalOnly,
+        ranked: this.ranked
+      }
+    );
 
     return {
       roomId: this.roomId,
@@ -3063,12 +3082,20 @@ generateLanCode() {
   return code;
 }
 
-async registerLanCode(code, roomId, roomSecret, ranked) {
+async registerLanCode(
+  code,
+  roomId,
+  roomSecret,
+  ranked,
+  localOnly = true
+) {
   return this._req('lan_code_register', {
     code: String(code).replace(/\D/g, '').slice(0, 6),
     roomId,
     roomSecret,
     ranked: !!ranked,
+    localOnly: !!localOnly,
+    matchMode: ranked ? 'ranked' : 'casual',
     ttlMs: 300000
   });
 }
