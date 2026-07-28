@@ -1,4 +1,3 @@
-/* GENERATED_FROM=input.js SOURCE_SHA256=7f86b47af14295a9095f301129e3715278774f6ff2431cc3589ade0a0b92909e FORMAT=READABLE_COMPACT PRINT_WIDTH=320 BLANK_LINES=SAFE_REMOVE DO_NOT_EDIT */
 /**
  * common/network-bridge.js
  * Общий WebRTC DataChannel + Yandex Cloud Function signaling bridge.
