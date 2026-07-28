@@ -14,6 +14,11 @@ const makeId = prefix => `${prefix}_${Date.now().toString(36)}_${Math.random().t
 const rpcPending = new Map();
 
 window.addEventListener('message', event => {
+  if (
+    window.parent !== window &&
+    event.source !== window.parent
+  ) return;
+
   const data = event.data || {};
 
   if (
@@ -56,7 +61,7 @@ const requestHost = (action, data = {}) => {
     const timer = setTimeout(() => {
       rpcPending.delete(requestId);
       reject(new Error('game_rpc_timeout'));
-    }, 12000);
+    }, 20000);
 
     rpcPending.set(requestId, {
       resolve,
@@ -125,6 +130,8 @@ export class NetworkBridge {
     this.pendingIce = [];
     this.connected = false;
     this.closed = false;
+    this.disconnectTimer = 0;
+    this.iceRestartAttempts = 0;
     this.iceServers = getIceServers();
     this.iceDiagnostics = {
       host: false,
@@ -529,18 +536,76 @@ export class NetworkBridge {
       // даёт максимальный шанс прямого соединения в одной Wi-Fi.
       this._markIceCandidate(e.candidate);
       if (!this.roomId || !this.remotePeerId) return;
-      this._sendSignal('ice', e.candidate).catch(err => this.onError(err));
+
+      this._sendSignal('ice', e.candidate).catch(error => {
+        this._emitStatus('ice retry', false, {
+          transient: true,
+          signalType: 'ice',
+          error: error?.message || String(error || '')
+        });
+      });
     };
 
     this.peer.onconnectionstatechange = () => {
       const st = this.peer?.connectionState || 'unknown';
+
       if (st === 'connected') {
+        clearTimeout(this.disconnectTimer);
+        this.disconnectTimer = 0;
+        this.iceRestartAttempts = 0;
         this.connected = true;
-        this._refreshSelectedCandidatePair().finally(() => this._emitStatus('online', true));
+
+        this._refreshSelectedCandidatePair()
+          .finally(() => this._emitStatus('online', true));
+
+        return;
       }
-      if (['disconnected', 'failed', 'closed'].includes(st)) {
+
+      if (st === 'disconnected') {
+        this._emitStatus('reconnecting', false, {
+          transient: true
+        });
+
+        clearTimeout(this.disconnectTimer);
+        this.disconnectTimer = setTimeout(() => {
+          if (
+            !this.closed &&
+            this.peer?.connectionState === 'disconnected'
+          ) {
+            this.connected = false;
+            this.onDisconnect({
+              state: 'disconnected_timeout'
+            });
+          }
+        }, 10000);
+
+        return;
+      }
+
+      if (st === 'failed') {
         this.connected = false;
-        this._emitStatus(st, false);
+        this._emitStatus('ice failed', false);
+
+        if (
+          this.role === 'guest' &&
+          this.iceRestartAttempts < 1
+        ) {
+          this.iceRestartAttempts++;
+          this._makeAndSendOffer('ice-restart', {
+            iceRestart: true
+          }).catch(error => {
+            this.onError(error);
+          });
+          return;
+        }
+
+        this.onDisconnect({ state: st });
+        return;
+      }
+
+      if (st === 'closed') {
+        this.connected = false;
+        this._emitStatus('closed', false);
         this.onDisconnect({ state: st });
       }
     };
@@ -576,7 +641,11 @@ export class NetworkBridge {
     };
     this.dataChannel.onclose = () => {
       this.connected = false;
-      this.onDisconnect({ state: 'datachannel_closed' });
+      if (!this.closed) {
+        this.onDisconnect({
+          state: 'datachannel_closed'
+        });
+      }
     };
     this.dataChannel.onmessage = e => {
       const data = jsonParse(e.data);
@@ -617,20 +686,43 @@ export class NetworkBridge {
     return res;
   }
 
-  async _makeAndSendOffer(reason = 'offer') {
-    const offer = await this.peer.createOffer();
+  async _makeAndSendOffer(
+    reason = 'offer',
+    options = {}
+  ) {
+    if (!this.peer || this.closed) {
+      throw new Error('peer_unavailable');
+    }
+
+    const offer = await this.peer.createOffer({
+      iceRestart: options.iceRestart === true
+    });
+
     await this.peer.setLocalDescription(offer);
+
     await this._sendSignal('offer', {
       sdp: this.peer.localDescription,
-      reason
+      reason,
+      iceRestart: options.iceRestart === true
     });
   }
 
   async _handleSignal(msg) {
-    const type = msg.type || msg.payload?.type;
-    const data = msg.data || msg.payload?.data;
+    const rawPayload = msg?.payload;
+    const payload = typeof rawPayload === 'string'
+      ? jsonParse(rawPayload)
+      : rawPayload;
 
-    if (!this.peer) return;
+    const type = safe(
+      msg?.type ||
+      payload?.type
+    );
+    const data =
+      msg?.data ??
+      payload?.data ??
+      null;
+
+    if (!this.peer || !type || !data) return;
 
     if (type === 'offer') {
       this._emitStatus('offer received', false, { signalType: 'offer' });
@@ -648,10 +740,19 @@ export class NetworkBridge {
     }
 
     if (type === 'answer') {
-      this._emitStatus('answer received', false, { signalType: 'answer' });
+      this._emitStatus('answer received', false, {
+        signalType: 'answer'
+      });
+
       const desc = data?.sdp || data;
-      if (this.peer.signalingState !== 'stable') {
-        await this.peer.setRemoteDescription(new RTCSessionDescription(desc));
+
+      if (
+        !this.peer.remoteDescription ||
+        this.peer.remoteDescription.type !== 'answer'
+      ) {
+        await this.peer.setRemoteDescription(
+          new RTCSessionDescription(desc)
+        );
       }
 
       for (const c of this.pendingIce.splice(0)) {
@@ -822,7 +923,7 @@ export class NetworkBridge {
     this._bindDataChannel(ch);
     await this._makeAndSendOffer('initial');
 
-    this._startPolling(this.forceLocalOnly ? 180 : 800);
+    this._startPolling(this.forceLocalOnly ? 650 : 900);
     this._emitStatus(this.forceLocalOnly ? 'lan connecting' : 'connecting', false, {
       localOnly: this.forceLocalOnly,
       ranked: this.ranked
@@ -969,6 +1070,9 @@ return {
 async close() {
     this.closed = true;
     this.stopPolling();
+
+    clearTimeout(this.disconnectTimer);
+    this.disconnectTimer = 0;
 
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.heartbeatTimer = 0;
