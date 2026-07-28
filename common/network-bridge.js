@@ -514,9 +514,10 @@ export class NetworkBridge {
     this.ranked = !!(joined?.ranked ?? this.ranked);
     this.forceLocalOnly = !!(joined?.localOnly ?? this.forceLocalOnly);
     if (rankedOverride !== null && !!rankedOverride !== this.ranked) {
-      const mode = await this.setRoomMode({ ranked: !!rankedOverride, localOnly: this.forceLocalOnly });
-      this.ranked = !!mode.ranked;
-      this.forceLocalOnly = !!mode.localOnly;
+      throw new Error('room_mode_mismatch');
+    }
+    if (this.gameId === 'war_hearts' && this.ranked !== true) {
+      throw new Error('ranked_room_required');
     }
     this.role = 'guest';
     this._initPeer();
