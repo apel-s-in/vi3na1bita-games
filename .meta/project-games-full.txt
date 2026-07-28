@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 16:45:10 UTC
+Сгенерировано: 2026-07-28 16:50:44 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2614,7 +2614,9 @@ export class NetworkBridge {
     this.ranked = !!opts.ranked;
     if (!this.roomId) {
       await this.createRoom({
-        createJoinToken: !this.forceLocalOnly
+        createJoinToken:
+          opts.createJoinToken !== false &&
+          !this.forceLocalOnly
       });
     }
     this.role = 'host';
