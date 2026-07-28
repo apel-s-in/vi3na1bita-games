@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 14:01:16 UTC
+Сгенерировано: 2026-07-28 14:32:56 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -1679,6 +1679,11 @@ const requestHost = (method, args = []) => {
 };
 
 window.addEventListener('message', event => {
+  if (
+    window.parent !== window &&
+    event.source !== window.parent
+  ) return;
+
   const data = event.data || {};
 
   if (
