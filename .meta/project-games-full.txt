@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 09:54:37 UTC
+Сгенерировано: 2026-07-28 09:56:47 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -3143,6 +3143,10 @@ export class NetworkBridge {
 
   async toggleVoice(enable) {
     if (!this.peer) return false;
+
+    if (!enable && !this.audioStream) {
+      return true;
+    }
 
     if (!this.audioStream) {
       this.audioStream = await navigator.mediaDevices.getUserMedia({
