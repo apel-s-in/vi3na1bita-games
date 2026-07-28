@@ -113,9 +113,11 @@ export class NetworkBridge {
 
         if (!transient || attempt >= backoffDelays.length) break;
 
-        const delay = localBackoff
-          ? backoffDelays[attempt]
-          : Math.min(4000, 800 * (attempt + 1));
+        const delay =
+          localBackoff ||
+          error?.status === 429
+            ? backoffDelays[attempt]
+            : Math.min(4000, 800 * (attempt + 1));
 
         this._emitStatus('server backoff', false, {
           transient: true,
