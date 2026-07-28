@@ -80,6 +80,7 @@ export class NetworkBridge {
     this.disconnectTimer = 0;
     this.iceRestartAttempts = 0;
     this.iceServers = getIceServers();
+    this.trickleIce = false;
     this.iceDiagnostics = { host: false, srflx: false, relay: false, selected: '', usesTurn: false, updatedAt: 0 };
     this.onConnect = () => {};
     this.onDisconnect = () => {};
@@ -302,6 +303,33 @@ export class NetworkBridge {
       u.searchParams.set('join', joinToken);
     }
     return u.toString();
+  }
+  _waitForIceGatheringComplete(timeoutMs = 4000) {
+    if (!this.peer || this.peer.iceGatheringState === 'complete') {
+      return Promise.resolve(true);
+    }
+
+    return new Promise(resolve => {
+      let settled = false;
+      let timer = 0;
+
+      const finish = complete => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        this.peer?.removeEventListener?.('icegatheringstatechange', onChange);
+        resolve(complete);
+      };
+
+      const onChange = () => {
+        if (this.peer?.iceGatheringState === 'complete') {
+          finish(true);
+        }
+      };
+
+      this.peer.addEventListener('icegatheringstatechange', onChange);
+      timer = setTimeout(() => finish(false), timeoutMs);
+    });
   }
   _initPeer() {
     try {
