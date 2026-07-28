@@ -42,7 +42,7 @@ const requestHost = (action, data = {}) => {
     const timer = setTimeout(() => {
       rpcPending.delete(requestId);
       reject(new Error('game_rpc_timeout'));
-    }, 20000);
+    }, 45000);
     rpcPending.set(requestId, { resolve, reject, timer });
     window.parent.postMessage({ kind: 'vitrina:game', bridgeId, capabilityToken: safe(window.__GC_CAPABILITY_TOKEN), type: 'GC_SIGNALING_REQUEST', payload: { requestId, action, data, capabilityToken: safe(window.__GC_CAPABILITY_TOKEN) } }, '*');
   });
@@ -92,17 +92,41 @@ export class NetworkBridge {
   }
   async _req(action, data = {}) {
     let lastError = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    const backoffDelays = [2000, 4000, 8000, 16000];
+
+    for (let attempt = 0; attempt <= backoffDelays.length; attempt++) {
       try {
-        return await requestHost(action, { displayName: this.displayName, gameId: this.gameId, ...data });
+        return await requestHost(action, {
+          displayName: this.displayName,
+          gameId: this.gameId,
+          ...data
+        });
       } catch (error) {
         lastError = error;
-        if (attempt > 0 || !/timeout|network|unreachable/i.test(String(error?.message || ''))) {
-          break;
-        }
-        await wait(350);
+        const message = String(error?.message || '');
+        const localBackoff = message === 'social_server_backoff_active';
+        const transient =
+          localBackoff ||
+          error?.status === 429 ||
+          /timeout|network|unreachable|resource_exhausted|too many requests/i.test(message);
+
+        if (!transient || attempt >= backoffDelays.length) break;
+
+        const delay = localBackoff
+          ? backoffDelays[attempt]
+          : Math.min(4000, 800 * (attempt + 1));
+
+        this._emitStatus('server backoff', false, {
+          transient: true,
+          action,
+          retryInMs: delay,
+          error: message
+        });
+
+        await wait(delay);
       }
     }
+
     throw lastError || new Error('game_rpc_failed');
   }
   _emitStatus(label, online = false, extra = {}) {
@@ -145,10 +169,7 @@ export class NetworkBridge {
     return this.iceDiagnostics;
   }
   async init() {
-    await this._loadRtcConfig();
-    await this._req('player_register', { displayName: this.displayName });
-    await this.heartbeat();
-    this._startHeartbeat();
+    this.closed = false;
     this._emitStatus('ready', false);
     return true;
   }
@@ -223,18 +244,40 @@ export class NetworkBridge {
   async getNearbyGame(code) {
     return this._req('nearby_game_join', { code: safe(code).replace(/\D/g, '').slice(0, 6), gameId: this.gameId });
   }
-  async createRoom() {
+  async createRoom({ createJoinToken = true } = {}) {
     const hostPeerId = makeId('host');
-    const res = await this._req('room_create', { gameId: this.gameId, peerId: hostPeerId });
+    const res = await this._req('room_create', {
+      gameId: this.gameId,
+      peerId: hostPeerId
+    });
+
     this.role = 'host';
     this.roomId = res.roomId;
     this.roomSecret = res.roomSecret;
     this.peerId = res.hostPeerId;
     this.remotePeerId = res.guestPeerId;
-    const join = await this.createJoinToken();
-    this.joinToken = join.token;
-    this.onRoom({ role: this.role, roomId: this.roomId, roomSecret: this.roomSecret, joinUrl: this.buildJoinUrl() });
-    return { ...res, joinUrl: this.buildJoinUrl() };
+    this.joinToken = '';
+
+    if (createJoinToken) {
+      const join = await this.createJoinToken();
+      this.joinToken = join.token;
+    }
+
+    const joinUrl = this.joinToken
+      ? this.buildJoinUrl()
+      : '';
+
+    this.onRoom({
+      role: this.role,
+      roomId: this.roomId,
+      roomSecret: this.roomSecret,
+      joinUrl
+    });
+
+    return {
+      ...res,
+      joinUrl
+    };
   }
   async createJoinToken({ invitedPlayerId = '' } = {}) {
     if (!this.roomId || !this.roomSecret) {
@@ -271,11 +314,25 @@ export class NetworkBridge {
     this.dataChannel = null;
     this.connected = false;
     this.pendingIce = [];
-    this.iceDiagnostics = { host: false, srflx: false, relay: false, selected: '', usesTurn: false, updatedAt: 0 };
+    this.processedSignalSeqs = new Set();
+    this.iceDiagnostics = {
+      host: false,
+      srflx: false,
+      relay: false,
+      selected: '',
+      usesTurn: false,
+      updatedAt: 0
+    };
     // ВАЖНО: STUN всегда включён. Браузеры маскируют host-кандидаты через mDNS (.local),
     // и без STUN два устройства в одной Wi-Fi часто не находят друг друга.
     // srflx-кандидаты с одинаковым внешним IP всё равно дают прямое локальное соединение.
-    const peerConfig = { iceServers: this.iceServers || getIceServers(), iceCandidatePoolSize: 8, iceTransportPolicy: 'all', bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require' };
+    const peerConfig = {
+      iceServers: this.iceServers || getIceServers(),
+      iceCandidatePoolSize: 0,
+      iceTransportPolicy: 'all',
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
+    };
     this.peer = new RTCPeerConnection(peerConfig);
     this.peer.onicecandidate = e => {
       if (!e.candidate) return;
@@ -335,8 +392,13 @@ export class NetworkBridge {
     this.dataChannel = channel;
     this.dataChannel.onopen = () => {
       this.connected = true;
+      this._startHeartbeat();
+      this.heartbeat().catch(() => null);
       this._emitStatus('online', true);
-      this.onConnect({ roomId: this.roomId, role: this.role });
+      this.onConnect({
+        roomId: this.roomId,
+        role: this.role
+      });
     };
     this.dataChannel.onclose = () => {
       this.connected = false;
@@ -516,7 +578,11 @@ export class NetworkBridge {
     this.closed = false;
     this.forceLocalOnly = !!opts.forceLocalOnly;
     this.ranked = !!opts.ranked;
-    if (!this.roomId) await this.createRoom();
+    if (!this.roomId) {
+      await this.createRoom({
+        createJoinToken: !this.forceLocalOnly
+      });
+    }
     this.role = 'host';
     if (Object.prototype.hasOwnProperty.call(opts, 'ranked') || Object.prototype.hasOwnProperty.call(opts, 'forceLocalOnly')) {
       const mode = await this.setRoomMode({ ranked: this.ranked, localOnly: this.forceLocalOnly });
@@ -526,7 +592,7 @@ export class NetworkBridge {
     this._initPeer();
     // Даже в LAN-режиме signaling остаётся нужен для обмена SDP/ICE.
     // Интервал не должен создавать сотни serverless-вызовов в минуту.
-    this._startPolling(this.forceLocalOnly ? 650 : 900);
+    this._startPolling(this.forceLocalOnly ? 3000 : 2000);
     this._emitStatus(this.forceLocalOnly ? 'lan waiting' : 'waiting', false, { localOnly: this.forceLocalOnly, ranked: this.ranked });
     return { roomId: this.roomId, roomSecret: this.roomSecret, joinUrl: this.buildJoinUrl(), localOnly: this.forceLocalOnly, ranked: this.ranked };
   }
@@ -549,7 +615,7 @@ export class NetworkBridge {
     const ch = this.peer.createDataChannel('game', { ordered: true });
     this._bindDataChannel(ch);
     await this._makeAndSendOffer('initial');
-    this._startPolling(this.forceLocalOnly ? 650 : 900);
+    this._startPolling(this.forceLocalOnly ? 1200 : 1500);
     this._emitStatus(this.forceLocalOnly ? 'lan connecting' : 'connecting', false, { localOnly: this.forceLocalOnly, ranked: this.ranked });
     return true;
   }
