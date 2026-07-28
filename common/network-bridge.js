@@ -500,8 +500,13 @@ export class NetworkBridge {
     if (!this.peer || !type || !data) return;
     if (type === 'offer') {
       this._emitStatus('offer received', false, { signalType: 'offer' });
-      const desc = data?.sdp || data;
-      await this.peer.setRemoteDescription(new RTCSessionDescription(desc));
+      const desc = data?.sdp && typeof data.sdp === 'object'
+        ? data.sdp
+        : data;
+
+      await this.peer.setRemoteDescription(
+        new RTCSessionDescription(desc)
+      );
       for (const c of this.pendingIce.splice(0)) {
         await this.peer.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
       }
@@ -512,17 +517,24 @@ export class NetworkBridge {
         await this._waitForIceGatheringComplete();
       }
 
-      await this._sendSignal(
-        'answer',
-        this.peer.localDescription
-      );
+      await this._sendSignal('answer', {
+        sdp: this.peer.localDescription
+      });
       return;
     }
     if (type === 'answer') {
       this._emitStatus('answer received', false, { signalType: 'answer' });
-      const desc = data?.sdp || data;
-      if (!this.peer.remoteDescription || this.peer.remoteDescription.type !== 'answer') {
-        await this.peer.setRemoteDescription(new RTCSessionDescription(desc));
+      const desc = data?.sdp && typeof data.sdp === 'object'
+        ? data.sdp
+        : data;
+
+      if (
+        !this.peer.remoteDescription ||
+        this.peer.remoteDescription.type !== 'answer'
+      ) {
+        await this.peer.setRemoteDescription(
+          new RTCSessionDescription(desc)
+        );
       }
       for (const c of this.pendingIce.splice(0)) {
         await this.peer.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
@@ -595,9 +607,17 @@ export class NetworkBridge {
       } catch (err) {
         fails++;
         this._emitStatus(fails > 2 ? 'signal retry' : 'signal wait', false, { transient: true, error: err?.message || String(err || '') });
-        // Важно: signal_poll может кратко падать на мобильной сети.
-        // Не вызываем onError до открытия DataChannel, иначе игра сама помечает P2P как разорванный.
-        if (this.connected && (fails === 3 || fails % 8 === 0)) this.onError(err);
+        // После открытия DataChannel signaling является вспомогательным.
+        // Его временная ошибка не означает разрыв прямого P2P-канала.
+        if (
+          this.connected &&
+          (fails === 3 || fails % 8 === 0)
+        ) {
+          this._emitStatus('signaling degraded', true, {
+            transient: true,
+            error: err?.message || String(err || '')
+          });
+        }
       } finally {
         busy = false;
         const normalDelay = this.connected
