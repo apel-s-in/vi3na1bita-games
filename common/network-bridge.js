@@ -169,6 +169,9 @@ export class NetworkBridge {
   async getLeaderboard() {
     return this._req('leaderboard_v2_get', {});
   }
+  async getRankedStats() {
+    return this._req('ranked_stats_get', {});
+  }
   async prepareRankedMatch() {
     if (!this.roomId || !this.roomSecret) {
       throw new Error('room_required');
