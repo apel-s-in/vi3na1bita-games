@@ -462,10 +462,16 @@ export class NetworkBridge {
       } finally {
         busy = false;
         const normalDelay = this.connected
-          ? Math.max(5000, intervalMs)
+          ? 15000
           : intervalMs;
-        const backoff = Math.min(8000, normalDelay + fails * 600);
-        this.pollTimer = setTimeout(tick, fails ? backoff : normalDelay);
+        const backoff = Math.min(
+          15000,
+          normalDelay + fails * 800
+        );
+        this.pollTimer = setTimeout(
+          tick,
+          fails ? backoff : normalDelay
+        );
       }
     };
     this.pollTimer = setTimeout(tick, 20);
@@ -486,7 +492,7 @@ export class NetworkBridge {
           }
         });
       }
-    }, 25000);
+    }, 60000);
   }
   async connectAsHost(opts = {}) {
     this.closed = false;
