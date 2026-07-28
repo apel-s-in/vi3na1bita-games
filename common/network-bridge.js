@@ -52,6 +52,7 @@ const getIceServers = () => {
   if (Array.isArray(custom) && custom.length) return custom;
   return [{ urls: 'stun:stun.sipnet.ru:3478' }, { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }];
 };
+const MAX_DATA_MESSAGE_BYTES = 64 * 1024;
 const getCandidateType = candidate => {
   const text = String(candidate?.candidate || candidate || '');
   return (text.match(/ typ ([a-z0-9]+)/i) || [])[1] || '';
@@ -340,10 +341,24 @@ export class NetworkBridge {
         this.onDisconnect({ state: 'datachannel_closed' });
       }
     };
-    this.dataChannel.onmessage = e => {
-      const data = jsonParse(e.data);
-      if (!data) return;
-      if (data.type === 'CHAT_MESSAGE') this.onChat(data);
+    this.dataChannel.onmessage = event => {
+      if (
+        typeof event.data !== 'string' ||
+        event.data.length > MAX_DATA_MESSAGE_BYTES
+      ) {
+        this._emitStatus('data rejected', false, {
+          error: 'data_message_too_large'
+        });
+        return;
+      }
+
+      const data = jsonParse(event.data);
+      if (!data || typeof data !== 'object') return;
+
+      if (data.type === 'CHAT_MESSAGE') {
+        this.onChat(data);
+      }
+
       this.onData(data);
     };
   }
@@ -549,8 +564,22 @@ export class NetworkBridge {
     return true;
   }
   send(data) {
-    if (this.dataChannel?.readyState !== 'open') return false;
-    this.dataChannel.send(JSON.stringify(data));
+    if (
+      this.dataChannel?.readyState !== 'open'
+    ) return false;
+
+    const text = JSON.stringify(data);
+    if (
+      !text ||
+      text.length > MAX_DATA_MESSAGE_BYTES
+    ) {
+      this._emitStatus('data rejected', false, {
+        error: 'data_message_too_large'
+      });
+      return false;
+    }
+
+    this.dataChannel.send(text);
     return true;
   }
   sendChat(text, from = this.displayName) {
