@@ -1,3 +1,4 @@
+/* GENERATED_FROM=input.js SOURCE_SHA256=7f86b47af14295a9095f301129e3715278774f6ff2431cc3589ade0a0b92909e FORMAT=READABLE_COMPACT PRINT_WIDTH=320 BLANK_LINES=SAFE_REMOVE DO_NOT_EDIT */
 /**
  * common/network-bridge.js
  * Общий WebRTC DataChannel + Yandex Cloud Function signaling bridge.
@@ -94,42 +95,20 @@ export class NetworkBridge {
   async _req(action, data = {}) {
     let lastError = null;
     const backoffDelays = [2000, 4000, 8000, 16000];
-
     for (let attempt = 0; attempt <= backoffDelays.length; attempt++) {
       try {
-        return await requestHost(action, {
-          displayName: this.displayName,
-          gameId: this.gameId,
-          ...data
-        });
+        return await requestHost(action, { displayName: this.displayName, gameId: this.gameId, ...data });
       } catch (error) {
         lastError = error;
         const message = String(error?.message || '');
         const localBackoff = message === 'social_server_backoff_active';
-        const transient =
-          localBackoff ||
-          error?.status === 429 ||
-          /timeout|network|unreachable|resource_exhausted|too many requests/i.test(message);
-
+        const transient = localBackoff || error?.status === 429 || /timeout|network|unreachable|resource_exhausted|too many requests/i.test(message);
         if (!transient || attempt >= backoffDelays.length) break;
-
-        const delay =
-          localBackoff ||
-          error?.status === 429
-            ? backoffDelays[attempt]
-            : Math.min(4000, 800 * (attempt + 1));
-
-        this._emitStatus('server backoff', false, {
-          transient: true,
-          action,
-          retryInMs: delay,
-          error: message
-        });
-
+        const delay = localBackoff || error?.status === 429 ? backoffDelays[attempt] : Math.min(4000, 800 * (attempt + 1));
+        this._emitStatus('server backoff', false, { transient: true, action, retryInMs: delay, error: message });
         await wait(delay);
       }
     }
-
     throw lastError || new Error('game_rpc_failed');
   }
   _emitStatus(label, online = false, extra = {}) {
@@ -249,38 +228,20 @@ export class NetworkBridge {
   }
   async createRoom({ createJoinToken = true } = {}) {
     const hostPeerId = makeId('host');
-    const res = await this._req('room_create', {
-      gameId: this.gameId,
-      peerId: hostPeerId
-    });
-
+    const res = await this._req('room_create', { gameId: this.gameId, peerId: hostPeerId });
     this.role = 'host';
     this.roomId = res.roomId;
     this.roomSecret = res.roomSecret;
     this.peerId = res.hostPeerId;
     this.remotePeerId = res.guestPeerId;
     this.joinToken = '';
-
     if (createJoinToken) {
       const join = await this.createJoinToken();
       this.joinToken = join.token;
     }
-
-    const joinUrl = this.joinToken
-      ? this.buildJoinUrl()
-      : '';
-
-    this.onRoom({
-      role: this.role,
-      roomId: this.roomId,
-      roomSecret: this.roomSecret,
-      joinUrl
-    });
-
-    return {
-      ...res,
-      joinUrl
-    };
+    const joinUrl = this.joinToken ? this.buildJoinUrl() : '';
+    this.onRoom({ role: this.role, roomId: this.roomId, roomSecret: this.roomSecret, joinUrl });
+    return { ...res, joinUrl };
   }
   async createJoinToken({ invitedPlayerId = '' } = {}) {
     if (!this.roomId || !this.roomSecret) {
@@ -310,11 +271,9 @@ export class NetworkBridge {
     if (!this.peer || this.peer.iceGatheringState === 'complete') {
       return Promise.resolve(true);
     }
-
     return new Promise(resolve => {
       let settled = false;
       let timer = 0;
-
       const finish = complete => {
         if (settled) return;
         settled = true;
@@ -322,13 +281,11 @@ export class NetworkBridge {
         this.peer?.removeEventListener?.('icegatheringstatechange', onChange);
         resolve(complete);
       };
-
       const onChange = () => {
         if (this.peer?.iceGatheringState === 'complete') {
           finish(true);
         }
       };
-
       this.peer.addEventListener('icegatheringstatechange', onChange);
       timer = setTimeout(() => finish(false), timeoutMs);
     });
@@ -345,42 +302,18 @@ export class NetworkBridge {
     this.connected = false;
     this.pendingIce = [];
     this.processedSignalSeqs = new Set();
-    this.iceDiagnostics = {
-      host: false,
-      srflx: false,
-      relay: false,
-      selected: '',
-      usesTurn: false,
-      updatedAt: 0
-    };
+    this.iceDiagnostics = { host: false, srflx: false, relay: false, selected: '', usesTurn: false, updatedAt: 0 };
     // ВАЖНО: STUN всегда включён. Браузеры маскируют host-кандидаты через mDNS (.local),
     // и без STUN два устройства в одной Wi-Fi часто не находят друг друга.
     // srflx-кандидаты с одинаковым внешним IP всё равно дают прямое локальное соединение.
-    const peerConfig = {
-      iceServers: this.iceServers || getIceServers(),
-      iceCandidatePoolSize: 0,
-      iceTransportPolicy: 'all',
-      bundlePolicy: 'max-bundle',
-      rtcpMuxPolicy: 'require'
-    };
+    const peerConfig = { iceServers: this.iceServers || getIceServers(), iceCandidatePoolSize: 0, iceTransportPolicy: 'all', bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require' };
     this.peer = new RTCPeerConnection(peerConfig);
     this.peer.onicecandidate = event => {
       if (!event.candidate) return;
-
       this._markIceCandidate(event.candidate);
-
-      if (
-        !this.trickleIce ||
-        !this.roomId ||
-        !this.remotePeerId
-      ) return;
-
+      if (!this.trickleIce || !this.roomId || !this.remotePeerId) return;
       this._sendSignal('ice', event.candidate).catch(error => {
-        this._emitStatus('ice retry', false, {
-          transient: true,
-          signalType: 'ice',
-          error: error?.message || String(error || '')
-        });
+        this._emitStatus('ice retry', false, { transient: true, signalType: 'ice', error: error?.message || String(error || '') });
       });
     };
     this.peer.onconnectionstatechange = () => {
@@ -407,40 +340,23 @@ export class NetworkBridge {
       if (st === 'failed') {
         this.connected = false;
         this._emitStatus('ice failed', false);
-        if (
-          this.role === 'guest' &&
-          this.iceRestartAttempts < 1
-        ) {
+        if (this.role === 'guest' && this.iceRestartAttempts < 1) {
           this.iceRestartAttempts++;
-
-          this._restartIceWithServerConfig()
-            .catch(error => {
-              this.onError(error);
-            });
-
+          this._restartIceWithServerConfig().catch(error => {
+            this.onError(error);
+          });
           return;
         }
         if (this.role === 'host') {
-          this._emitStatus('reconnecting', false, {
-            transient: true,
-            waitingForRemoteRestart: true
-          });
-
+          this._emitStatus('reconnecting', false, { transient: true, waitingForRemoteRestart: true });
           clearTimeout(this.disconnectTimer);
           this.disconnectTimer = setTimeout(() => {
-            if (
-              !this.closed &&
-              this.peer?.connectionState === 'failed'
-            ) {
-              this.onDisconnect({
-                state: 'failed_timeout'
-              });
+            if (!this.closed && this.peer?.connectionState === 'failed') {
+              this.onDisconnect({ state: 'failed_timeout' });
             }
           }, 25000);
-
           return;
         }
-
         this.onDisconnect({ state: st });
         return;
       }
@@ -461,10 +377,7 @@ export class NetworkBridge {
       this._startHeartbeat();
       this.heartbeat().catch(() => null);
       this._emitStatus('online', true);
-      this.onConnect({
-        roomId: this.roomId,
-        role: this.role
-      });
+      this.onConnect({ roomId: this.roomId, role: this.role });
     };
     this.dataChannel.onclose = () => {
       this.connected = false;
@@ -473,23 +386,15 @@ export class NetworkBridge {
       }
     };
     this.dataChannel.onmessage = event => {
-      if (
-        typeof event.data !== 'string' ||
-        event.data.length > MAX_DATA_MESSAGE_BYTES
-      ) {
-        this._emitStatus('data rejected', false, {
-          error: 'data_message_too_large'
-        });
+      if (typeof event.data !== 'string' || event.data.length > MAX_DATA_MESSAGE_BYTES) {
+        this._emitStatus('data rejected', false, { error: 'data_message_too_large' });
         return;
       }
-
       const data = jsonParse(event.data);
       if (!data || typeof data !== 'object') return;
-
       if (data.type === 'CHAT_MESSAGE') {
         this.onChat(data);
       }
-
       this.onData(data);
     };
   }
@@ -503,46 +408,24 @@ export class NetworkBridge {
     if (!this.peer || this.closed) {
       throw new Error('peer_unavailable');
     }
-
     const iceServers = await this._loadRtcConfig();
-
-    this.peer.setConfiguration({
-      ...this.peer.getConfiguration(),
-      iceServers,
-      iceTransportPolicy: 'all'
-    });
-
-    return this._makeAndSendOffer('ice-restart', {
-      iceRestart: true
-    });
+    this.peer.setConfiguration({ ...this.peer.getConfiguration(), iceServers, iceTransportPolicy: 'all' });
+    return this._makeAndSendOffer('ice-restart', { iceRestart: true });
   }
   async _makeAndSendOffer(reason = 'offer', options = {}) {
     if (!this.peer || this.closed) {
       throw new Error('peer_unavailable');
     }
-    const offer = await this.peer.createOffer({
-      iceRestart: options.iceRestart === true
-    });
-
+    const offer = await this.peer.createOffer({ iceRestart: options.iceRestart === true });
     await this.peer.setLocalDescription(offer);
-
     if (!this.trickleIce) {
-      const complete =
-        await this._waitForIceGatheringComplete();
-
+      const complete = await this._waitForIceGatheringComplete();
       if (!complete) {
         this.trickleIce = true;
-        this._emitStatus('ice gathering slow', false, {
-          transient: true
-        });
+        this._emitStatus('ice gathering slow', false, { transient: true });
       }
     }
-
-    await this._sendSignal('offer', {
-      sdp: this.peer.localDescription,
-      reason,
-      iceRestart: options.iceRestart === true
-    });
+    await this._sendSignal('offer', { sdp: this.peer.localDescription, reason, iceRestart: options.iceRestart === true });
   }
   async _handleSignal(msg) {
     const rawPayload = msg?.payload;
@@ -552,49 +435,28 @@ export class NetworkBridge {
     if (!this.peer || !type || !data) return;
     if (type === 'offer') {
       this._emitStatus('offer received', false, { signalType: 'offer' });
-      const desc = data?.sdp && typeof data.sdp === 'object'
-        ? data.sdp
-        : data;
-
-      await this.peer.setRemoteDescription(
-        new RTCSessionDescription(desc)
-      );
+      const desc = data?.sdp && typeof data.sdp === 'object' ? data.sdp : data;
+      await this.peer.setRemoteDescription(new RTCSessionDescription(desc));
       for (const c of this.pendingIce.splice(0)) {
         await this.peer.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
       }
       const answer = await this.peer.createAnswer();
       await this.peer.setLocalDescription(answer);
-
       if (!this.trickleIce) {
-        const complete =
-          await this._waitForIceGatheringComplete();
-
+        const complete = await this._waitForIceGatheringComplete();
         if (!complete) {
           this.trickleIce = true;
-          this._emitStatus('ice gathering slow', false, {
-            transient: true
-          });
+          this._emitStatus('ice gathering slow', false, { transient: true });
         }
       }
-
-      await this._sendSignal('answer', {
-        sdp: this.peer.localDescription
-      });
+      await this._sendSignal('answer', { sdp: this.peer.localDescription });
       return;
     }
     if (type === 'answer') {
       this._emitStatus('answer received', false, { signalType: 'answer' });
-      const desc = data?.sdp && typeof data.sdp === 'object'
-        ? data.sdp
-        : data;
-
-      if (
-        !this.peer.remoteDescription ||
-        this.peer.remoteDescription.type !== 'answer'
-      ) {
-        await this.peer.setRemoteDescription(
-          new RTCSessionDescription(desc)
-        );
+      const desc = data?.sdp && typeof data.sdp === 'object' ? data.sdp : data;
+      if (!this.peer.remoteDescription || this.peer.remoteDescription.type !== 'answer') {
+        await this.peer.setRemoteDescription(new RTCSessionDescription(desc));
       }
       for (const c of this.pendingIce.splice(0)) {
         await this.peer.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
@@ -630,38 +492,21 @@ export class NetworkBridge {
       }
       busy = true;
       try {
-        const res = await this._req('signal_poll', {
-          roomId: this.roomId,
-          roomSecret: this.roomSecret,
-          peerId: this.peerId
-        });
-
+        const res = await this._req('signal_poll', { roomId: this.roomId, roomSecret: this.roomSecret, peerId: this.peerId });
         fails = 0;
         const ackSeqs = [];
-
         for (const msg of res.messages || []) {
           const seq = safe(msg?.seq);
-
           if (!seq || !this.processedSignalSeqs.has(seq)) {
             await this._handleSignal(msg);
             if (seq) this.processedSignalSeqs.add(seq);
           }
-
           if (seq) ackSeqs.push(seq);
         }
-
         if (ackSeqs.length) {
-          await this._req('signal_ack', {
-            roomId: this.roomId,
-            roomSecret: this.roomSecret,
-            peerId: this.peerId,
-            seqs: ackSeqs
-          });
-
+          await this._req('signal_ack', { roomId: this.roomId, roomSecret: this.roomSecret, peerId: this.peerId, seqs: ackSeqs });
           if (this.processedSignalSeqs.size > 400) {
-            this.processedSignalSeqs = new Set(
-              [...this.processedSignalSeqs].slice(-200)
-            );
+            this.processedSignalSeqs = new Set([...this.processedSignalSeqs].slice(-200));
           }
         }
       } catch (err) {
@@ -669,28 +514,14 @@ export class NetworkBridge {
         this._emitStatus(fails > 2 ? 'signal retry' : 'signal wait', false, { transient: true, error: err?.message || String(err || '') });
         // После открытия DataChannel signaling является вспомогательным.
         // Его временная ошибка не означает разрыв прямого P2P-канала.
-        if (
-          this.connected &&
-          (fails === 3 || fails % 8 === 0)
-        ) {
-          this._emitStatus('signaling degraded', true, {
-            transient: true,
-            error: err?.message || String(err || '')
-          });
+        if (this.connected && (fails === 3 || fails % 8 === 0)) {
+          this._emitStatus('signaling degraded', true, { transient: true, error: err?.message || String(err || '') });
         }
       } finally {
         busy = false;
-        const normalDelay = this.connected
-          ? 15000
-          : intervalMs;
-        const backoff = Math.min(
-          15000,
-          normalDelay + fails * 800
-        );
-        this.pollTimer = setTimeout(
-          tick,
-          fails ? backoff : normalDelay
-        );
+        const normalDelay = this.connected ? 15000 : intervalMs;
+        const backoff = Math.min(15000, normalDelay + fails * 800);
+        this.pollTimer = setTimeout(tick, fails ? backoff : normalDelay);
       }
     };
     this.pollTimer = setTimeout(tick, 20);
@@ -701,15 +532,10 @@ export class NetworkBridge {
   }
   _startHeartbeat() {
     if (this.heartbeatTimer) return;
-
     this.heartbeatTimer = setInterval(() => {
       if (document.hidden || !this.connected) return;
-
       this.heartbeat().catch(error => {
-        this._emitStatus('presence degraded', true, {
-          transient: true,
-          error: error?.message || String(error || '')
-        });
+        this._emitStatus('presence degraded', true, { transient: true, error: error?.message || String(error || '') });
       });
     }, 60000);
   }
@@ -718,11 +544,7 @@ export class NetworkBridge {
     this.forceLocalOnly = !!opts.forceLocalOnly;
     this.ranked = !!opts.ranked;
     if (!this.roomId) {
-      await this.createRoom({
-        createJoinToken:
-          opts.createJoinToken !== false &&
-          !this.forceLocalOnly
-      });
+      await this.createRoom({ createJoinToken: !this.forceLocalOnly });
     }
     this.role = 'host';
     if (Object.prototype.hasOwnProperty.call(opts, 'ranked') || Object.prototype.hasOwnProperty.call(opts, 'forceLocalOnly')) {
@@ -774,21 +596,12 @@ export class NetworkBridge {
     return true;
   }
   send(data) {
-    if (
-      this.dataChannel?.readyState !== 'open'
-    ) return false;
-
+    if (this.dataChannel?.readyState !== 'open') return false;
     const text = JSON.stringify(data);
-    if (
-      !text ||
-      text.length > MAX_DATA_MESSAGE_BYTES
-    ) {
-      this._emitStatus('data rejected', false, {
-        error: 'data_message_too_large'
-      });
+    if (!text || text.length > MAX_DATA_MESSAGE_BYTES) {
+      this._emitStatus('data rejected', false, { error: 'data_message_too_large' });
       return false;
     }
-
     this.dataChannel.send(text);
     return true;
   }
