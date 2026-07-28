@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  const GAME_REGISTRY = { war_hearts: { id: 'war_hearts', title: 'Война Сердец', path: './war_hearts/', door: 'arena:war_hearts', allow: 'fullscreen; microphone' } };
+  const GAME_REGISTRY = { war_hearts: { id: 'war_hearts', title: 'Война Сердец', path: './war_hearts/', door: 'arena:war_hearts', allow: 'fullscreen' } };
   const state = { bridgeId: '', snapshot: null, screen: 'tower', activeGameId: '', friendsEmbed: null, capabilities: { tower: '', games: {} } };
   const isStandalone = () => window.parent === window;
   const send = (type, payload = {}) => {
