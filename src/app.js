@@ -539,6 +539,11 @@
 
   const bindBridge = () => {
     window.addEventListener('message', e => {
+      if (
+        window.parent !== window &&
+        e.source !== window.parent
+      ) return;
+
       const d = e.data || {};
       if (d.kind !== 'vitrina:game-host') return;
 
