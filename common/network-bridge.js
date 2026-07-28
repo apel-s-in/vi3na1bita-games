@@ -1077,12 +1077,14 @@ async close() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.heartbeatTimer = 0;
 
-    try {
-      await this._req('room_close', {
-        roomId: this.roomId,
-        roomSecret: this.roomSecret
-      });
-    } catch {}
+    if (this.roomId && this.roomSecret) {
+      try {
+        await this._req('room_close', {
+          roomId: this.roomId,
+          roomSecret: this.roomSecret
+        });
+      } catch {}
+    }
 
     try { this.dataChannel?.close?.(); } catch {}
     try { this.peer?.close?.(); } catch {}
