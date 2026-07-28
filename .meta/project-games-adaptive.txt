@@ -63,7 +63,7 @@ vi3na1bita-games/
 ├── README.md
 └── styles.css
 
-Сгенерировано: 2026-07-28 16:39:49 UTC
+Сгенерировано: 2026-07-28 16:41:36 UTC
 
 //=================================================
 // FILE: /.github/workflows/deploy.yml
@@ -2378,7 +2378,15 @@ export class NetworkBridge {
     await this.peer.setLocalDescription(offer);
 
     if (!this.trickleIce) {
-      await this._waitForIceGatheringComplete();
+      const complete =
+        await this._waitForIceGatheringComplete();
+
+      if (!complete) {
+        this.trickleIce = true;
+        this._emitStatus('ice gathering slow', false, {
+          transient: true
+        });
+      }
     }
 
     await this._sendSignal('offer', {
@@ -2409,7 +2417,15 @@ export class NetworkBridge {
       await this.peer.setLocalDescription(answer);
 
       if (!this.trickleIce) {
-        await this._waitForIceGatheringComplete();
+        const complete =
+          await this._waitForIceGatheringComplete();
+
+        if (!complete) {
+          this.trickleIce = true;
+          this._emitStatus('ice gathering slow', false, {
+            transient: true
+          });
+        }
       }
 
       await this._sendSignal('answer', {
