@@ -990,6 +990,10 @@ export class NetworkBridge {
   async toggleVoice(enable) {
     if (!this.peer) return false;
 
+    if (!enable && !this.audioStream) {
+      return true;
+    }
+
     if (!this.audioStream) {
       this.audioStream = await navigator.mediaDevices.getUserMedia({
         audio: {
