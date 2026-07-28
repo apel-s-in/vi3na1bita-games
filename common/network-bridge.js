@@ -719,7 +719,9 @@ export class NetworkBridge {
     this.ranked = !!opts.ranked;
     if (!this.roomId) {
       await this.createRoom({
-        createJoinToken: !this.forceLocalOnly
+        createJoinToken:
+          opts.createJoinToken !== false &&
+          !this.forceLocalOnly
       });
     }
     this.role = 'host';
