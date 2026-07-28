@@ -521,7 +521,7 @@ export class NetworkBridge {
     this.role = 'guest';
     this._initPeer();
     // Guest первым создаёт DataChannel и отправляет initial offer.
-    const ch = this.peer.createDataChannel('game', { ordered: true, maxRetransmits: 5 });
+    const ch = this.peer.createDataChannel('game', { ordered: true });
     this._bindDataChannel(ch);
     await this._makeAndSendOffer('initial');
     this._startPolling(this.forceLocalOnly ? 650 : 900);
