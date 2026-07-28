@@ -641,16 +641,16 @@ export class NetworkBridge {
   }
   _startHeartbeat() {
     if (this.heartbeatTimer) return;
+
     this.heartbeatTimer = setInterval(() => {
-      if (!document.hidden) {
-        this.heartbeat().catch(err => {
-          if (err && err.status >= 500) {
-            clearInterval(this.heartbeatTimer);
-            this.heartbeatTimer = 0;
-            this.onError(err);
-          }
+      if (document.hidden || !this.connected) return;
+
+      this.heartbeat().catch(error => {
+        this._emitStatus('presence degraded', true, {
+          transient: true,
+          error: error?.message || String(error || '')
         });
-      }
+      });
     }, 60000);
   }
   async connectAsHost(opts = {}) {
