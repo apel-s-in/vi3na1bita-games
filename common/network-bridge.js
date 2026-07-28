@@ -362,14 +362,23 @@ export class NetworkBridge {
       rtcpMuxPolicy: 'require'
     };
     this.peer = new RTCPeerConnection(peerConfig);
-    this.peer.onicecandidate = e => {
-      if (!e.candidate) return;
-      // Никогда не фильтруем кандидаты: симметричный полный набор у host и guest
-      // даёт максимальный шанс прямого соединения в одной Wi-Fi.
-      this._markIceCandidate(e.candidate);
-      if (!this.roomId || !this.remotePeerId) return;
-      this._sendSignal('ice', e.candidate).catch(error => {
-        this._emitStatus('ice retry', false, { transient: true, signalType: 'ice', error: error?.message || String(error || '') });
+    this.peer.onicecandidate = event => {
+      if (!event.candidate) return;
+
+      this._markIceCandidate(event.candidate);
+
+      if (
+        !this.trickleIce ||
+        !this.roomId ||
+        !this.remotePeerId
+      ) return;
+
+      this._sendSignal('ice', event.candidate).catch(error => {
+        this._emitStatus('ice retry', false, {
+          transient: true,
+          signalType: 'ice',
+          error: error?.message || String(error || '')
+        });
       });
     };
     this.peer.onconnectionstatechange = () => {
@@ -465,9 +474,21 @@ export class NetworkBridge {
     if (!this.peer || this.closed) {
       throw new Error('peer_unavailable');
     }
-    const offer = await this.peer.createOffer({ iceRestart: options.iceRestart === true });
+    const offer = await this.peer.createOffer({
+      iceRestart: options.iceRestart === true
+    });
+
     await this.peer.setLocalDescription(offer);
-    await this._sendSignal('offer', { sdp: this.peer.localDescription, reason, iceRestart: options.iceRestart === true });
+
+    if (!this.trickleIce) {
+      await this._waitForIceGatheringComplete();
+    }
+
+    await this._sendSignal('offer', {
+      sdp: this.peer.localDescription,
+      reason,
+      iceRestart: options.iceRestart === true
+    });
   }
   async _handleSignal(msg) {
     const rawPayload = msg?.payload;
@@ -484,7 +505,15 @@ export class NetworkBridge {
       }
       const answer = await this.peer.createAnswer();
       await this.peer.setLocalDescription(answer);
-      await this._sendSignal('answer', this.peer.localDescription);
+
+      if (!this.trickleIce) {
+        await this._waitForIceGatheringComplete();
+      }
+
+      await this._sendSignal(
+        'answer',
+        this.peer.localDescription
+      );
       return;
     }
     if (type === 'answer') {
