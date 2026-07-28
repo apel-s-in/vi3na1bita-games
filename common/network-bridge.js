@@ -401,19 +401,46 @@ export class NetworkBridge {
             this.connected = false;
             this.onDisconnect({ state: 'disconnected_timeout' });
           }
-        }, 10000);
+        }, 25000);
         return;
       }
       if (st === 'failed') {
         this.connected = false;
         this._emitStatus('ice failed', false);
-        if (this.role === 'guest' && this.iceRestartAttempts < 1) {
+        if (
+          this.role === 'guest' &&
+          this.iceRestartAttempts < 1
+        ) {
           this.iceRestartAttempts++;
-          this._makeAndSendOffer('ice-restart', { iceRestart: true }).catch(error => {
-            this.onError(error);
-          });
+
+          this._restartIceWithServerConfig()
+            .catch(error => {
+              this.onError(error);
+            });
+
           return;
         }
+        if (this.role === 'host') {
+          this._emitStatus('reconnecting', false, {
+            transient: true,
+            waitingForRemoteRestart: true
+          });
+
+          clearTimeout(this.disconnectTimer);
+          this.disconnectTimer = setTimeout(() => {
+            if (
+              !this.closed &&
+              this.peer?.connectionState === 'failed'
+            ) {
+              this.onDisconnect({
+                state: 'failed_timeout'
+              });
+            }
+          }, 25000);
+
+          return;
+        }
+
         this.onDisconnect({ state: st });
         return;
       }
@@ -471,6 +498,23 @@ export class NetworkBridge {
     const res = await this._req('signal_send', { roomId: this.roomId, roomSecret: this.roomSecret, fromPeerId: this.peerId, toPeerId: this.remotePeerId, type, payload: { type, data } });
     this._emitStatus(`${type} sent`, false, { signalType: type });
     return res;
+  }
+  async _restartIceWithServerConfig() {
+    if (!this.peer || this.closed) {
+      throw new Error('peer_unavailable');
+    }
+
+    const iceServers = await this._loadRtcConfig();
+
+    this.peer.setConfiguration({
+      ...this.peer.getConfiguration(),
+      iceServers,
+      iceTransportPolicy: 'all'
+    });
+
+    return this._makeAndSendOffer('ice-restart', {
+      iceRestart: true
+    });
   }
   async _makeAndSendOffer(reason = 'offer', options = {}) {
     if (!this.peer || this.closed) {
