@@ -483,7 +483,15 @@ export class NetworkBridge {
     await this.peer.setLocalDescription(offer);
 
     if (!this.trickleIce) {
-      await this._waitForIceGatheringComplete();
+      const complete =
+        await this._waitForIceGatheringComplete();
+
+      if (!complete) {
+        this.trickleIce = true;
+        this._emitStatus('ice gathering slow', false, {
+          transient: true
+        });
+      }
     }
 
     await this._sendSignal('offer', {
@@ -514,7 +522,15 @@ export class NetworkBridge {
       await this.peer.setLocalDescription(answer);
 
       if (!this.trickleIce) {
-        await this._waitForIceGatheringComplete();
+        const complete =
+          await this._waitForIceGatheringComplete();
+
+        if (!complete) {
+          this.trickleIce = true;
+          this._emitStatus('ice gathering slow', false, {
+            transient: true
+          });
+        }
       }
 
       await this._sendSignal('answer', {
