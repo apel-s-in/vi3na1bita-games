@@ -102,13 +102,13 @@
       <div class="bt-friends-host"></div>
     `;
     try {
-      const moduleUrl = new URL('./common/friends-embed.js?v=9.2.5', document.baseURI).href;
+      const moduleUrl = new URL('./common/friends-embed.js?v=9.2.6', document.baseURI).href;
       const module = await import(moduleUrl);
       state.friendsEmbed?.destroy?.();
       state.friendsEmbed = await module.mountCanonicalFriends({
         root: panel.querySelector('.bt-friends-host'),
         identity: state.snapshot?.friend || {},
-        build: '9.2.5',
+        build: '9.2.6',
         onGameInvite: ({ friendId, gameId }) => {
           closePanel();
           const url = new URL(window.location.href);
