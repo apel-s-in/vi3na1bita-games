@@ -6,11 +6,11 @@
 
 import {
   attachEmbeddedFriendsCoreMethods
-} from 'https://vi3na1bita.website.yandexcloud.net/Friends/embedded-rpc-contract.js?v=9.3.9';
+} from 'https://vi3na1bita.website.yandexcloud.net/Friends/embedded-rpc-contract.js?v=9.4.0';
 
 const FRIENDS_BASE =
   'https://vi3na1bita.website.yandexcloud.net/Friends';
-const DEFAULT_BUILD = '9.3.9';
+const DEFAULT_BUILD = '9.4.0';
 const RPC_TIMEOUT_MS = 20000;
 
 const pending = new Map();
